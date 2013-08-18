@@ -1,0 +1,7 @@
+####### minimum configuration required for all renderers #############
+postTitle:                  mike schiller
+postTitleColor:             white
+postTitleBackgroundColor:   "#f3f3f3"
+postImage:                  post.jpg
+postRenderer:               homeRenderer
+postWebPath:                /
