@@ -5,3 +5,4 @@ postTitleBackgroundColor:   "#f3f3f3"
 postImage:                  post.jpg
 postRenderer:               homeRenderer
 postWebPath:                /
+navTitle:                   Home
