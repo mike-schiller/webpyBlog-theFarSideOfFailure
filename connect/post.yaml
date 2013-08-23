@@ -1,0 +1,25 @@
+####### minimum configuration required for all renderers #############
+postTitle:                  mike schiller
+postTitleColor:             white
+postTitleBackgroundColor:   "#f3f3f3"
+postImage:                  ./connect.jpg
+postRenderer:               homeRenderer
+postWebPath:                /connect
+navTitle:                   Connect
+contentBlocks:
+    narrowContent:
+        template:           ./post.html
+        templateRenderer:   minimalRenderer
+    narrowContentShareFollow:
+        template:           static/shareFollow.html
+        templateRenderer:
+    wideContent:
+        template:           
+        templateRenderer:   
+    wideContentShareFollow:
+        template:           #static/shareFollow.html
+        templateRenderer:
+    leftFooterContent:
+        template:
+        templateRenderer:
+
