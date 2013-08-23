@@ -2,7 +2,24 @@
 postTitle:                  mike schiller
 postTitleColor:             white
 postTitleBackgroundColor:   "#f3f3f3"
-postImage:                  post.jpg
+postImage:                  ./post.jpg
 postRenderer:               homeRenderer
 postWebPath:                /
 navTitle:                   Home
+contentBlocks:
+    narrowContent:
+        template:           #./post.html
+        templateRenderer:   
+    narrowContentShareFollow:
+        template:           #static/shareFollow.html
+        templateRenderer:
+    wideContent:
+        template:           ./post.html
+        templateRenderer:   minimalRenderer
+    wideContentShareFollow:
+        template:           static/shareFollow.html
+        templateRenderer:
+    leftFooterContent:
+        template:
+        templateRenderer:
+
