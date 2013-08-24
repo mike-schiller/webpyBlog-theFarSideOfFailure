@@ -7,7 +7,7 @@ $def with(config,content)
     <div style="floatLeft">
       <div style="floatLeft">  
         <div style="text-align:center;font-family:sans;font-size:18px">
-            $config['postTitle']
+            <a data-ajax="false" href="$config['postWebPath']">$config['postTitle']</a>
         </div>
         <div>
             <hr style="width:10%;text-align:center" />
@@ -16,6 +16,17 @@ $def with(config,content)
       <div>
           $content['intro']
       </div>
+    </div>
+    <div style="width:100%;float:left">
+        <div style="width:50%;float:left;text-align:left">
+            $content['postDate']
+        </div>
+        <div style="width:50%;float:left;text-align:right">
+            <a data-ajax="false" href="$config['postWebPath']">Read Full Post >></a>
+        </div>
+    </div>
+    <div style="width:100%;float:left;padding-bottom:15px">
+        <hr width=100% />
     </div>
 </div>
 
