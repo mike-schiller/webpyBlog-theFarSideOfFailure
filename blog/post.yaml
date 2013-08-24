@@ -1,0 +1,25 @@
+####### minimum configuration required for all renderers #############
+postTitle:                  blog 
+postTitleColor:             black
+postTitleBackgroundColor:   "#f3f3f3"
+postImage:                  ./blog.png
+postRenderer:               homeRenderer
+postWebPath:                /blog
+navTitle:                   Blog
+contentBlocks:
+    narrowContent:
+        template:           #./post.html
+        templateRenderer:   
+    narrowContentShareFollow:
+        template:           #static/shareFollow.html
+        templateRenderer:
+    wideContent:
+        template:           ./preview.html
+        templateRenderer:   previewRenderer
+    wideContentShareFollow:
+        template:           static/shareFollow.html
+        templateRenderer:
+    leftFooterContent:
+        template:
+        templateRenderer:
+
