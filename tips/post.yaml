@@ -1,0 +1,25 @@
+####### minimum configuration required for all renderers #############
+postTitle:                  Tips & Tricks
+postTitleColor:             white
+postTitleBackgroundColor:   "#f3f3f3"
+postImage:                  ./tipsntricks.jpg
+postRenderer:               homeRenderer
+postWebPath:                /tips_and_tricks
+navTitle:                   Tips
+contentBlocks:
+    narrowContent:
+        template:           #./post.html
+        templateRenderer:   
+    narrowContentShareFollow:
+        template:           #static/shareFollow.html
+        templateRenderer:
+    wideContent:
+        template:           ./preview.html
+        templateRenderer:   previewRenderer
+    wideContentShareFollow:
+        template:           static/shareFollow.html
+        templateRenderer:
+    leftFooterContent:
+        template:
+        templateRenderer:
+

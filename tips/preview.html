@@ -1,0 +1,21 @@
+$def with(config,content)
+
+<div style="float:left;width:100%;position:relative;">
+    <div style="max-width:350px;float:left;padding-right:10px">
+        <a data-ajax="false" href="$config['postWebPath']"><img alt="" src="$config['fsrelpath']/$config['postImage']" style="max-width:350px" /></a>
+    </div>
+    <div style="floatLeft">
+      <div style="floatLeft">  
+        <div style="text-align:center;font-family:sans;font-size:18px">
+            $config['postTitle']
+        </div>
+        <div>
+            <hr style="width:10%;text-align:center" />
+        </div>
+      </div>
+      <div>
+          $content['intro']
+      </div>
+    </div>
+</div>
+
