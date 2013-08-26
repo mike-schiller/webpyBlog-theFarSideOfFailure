@@ -1,0 +1,25 @@
+$def with(config)
+<intro>
+<p>I&#39;m in the process of building out several distributed applications based on <a href="http://zookeeper.apache.org">Zookeeper</a>, <a href="http://en.wikipedia.org/wiki/HDFS#Hadoop_Distributed_File_System">HDFS</a>, <a href="http://www.docker.io">Docker</a>, and other components such as a message bus and <a href="http://en.wikipedia.org/wiki/BigTable">Big Table</a>&nbsp;database.</p>
+
+<p>While I can develop on shared resources with other developers, it&#39;s often handy to be able to quickly configure and deploy a set of VMs on my MacBook to test things out in a throw-away environment where I can&#39;t step on others&#39; toes.&nbsp;</p>
+
+<p>The SAs I work with use <a href="http://theforeman.org/">Foreman</a>&nbsp;and <a href="https://puppetlabs.com/">Puppet</a>&nbsp;to manage much of our shared infrastructure, so I decided to set up a similar environment on my laptop.&nbsp;</p></intro>
+
+<p>Since my customers generally prefer <a href="http://www.redhat.com/products/enterprise-linux/">RHEL</a>&nbsp;based OSes, I decided to build my Foreman server on CentOS 6.4. On the <a href="http://isoredirect.centos.org/centos/6/isos/x86_64/">CentOS mirror site,</a> I chose a mirror, and downloaded CentOS-6.4-x86_64-minimal.iso.</p>
+
+<p>I wanted a private network for my development VMs to facilitate easy PXE installations on new VMs over a non-exposed network. Ultimately, the Foreman VM could be used as an Internet gateway.</p>
+
+<p>By default, VMWare Fusion configures two virtual networks on a Mac. VNET_1 is a host-only network configured with&nbsp; DHCP, and VNET_8 is the default NATted network for VMs. As I wanted my Foreman VM to perform DHCP for new VMs, and as I didn&#39;t want to reconfigure VNET_1, I added a host-only non-DHCP network called VNET_2 by adding the following lines to&nbsp;/Library/Preferences/VMware Fusion/networking and restarting Fusion.</p>
+
+<!-- format this as code w/pygments -->
+answer VNET_2_DHCP no
+answer VNET_2_HOSTONLY_NETMASK 255.255.255.0
+answer VNET_2_HOSTONLY_SUBNET 10.2.1.0
+answer VNET_2_VIRTUAL_ADAPTER yes
+answer VNET_2_VIRTUAL_ADAPTER_ADDR 10.2.1.2
+
+<!-- screenshots should probably have margin-top:-10px. If floated left, margin-left:-25px. If floated right, -5px -->
+<p><a href="$config['fsrelpath']/images/VNET_2.png" data-lightbox="image-1" title="screenshot"  ><img alt="" src="$config['fsrelpath']/images/VNET_2.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>Next, I Set up a VM with two network adapters. Since I want Foreman to manage DHCP and VM configurations on the private network, and since Foremen's DHCP configuration can be a challenge to get working on a secondary interface, I configured the first network to be the host-only VNET_2 (vmnet2) that I added to VMWare Fusion. </p>
+
+<p> blah blah blah</p>
