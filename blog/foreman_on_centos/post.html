@@ -285,4 +285,24 @@ $def with(config)
 <span style="color: #888888">num   pkts bytes target     prot opt in     out     source               destination </span>
 </pre></div>
 
+<p>The problem is the catch-all reject at the INPUT chain's rule #5. We need to delete that rule, add it to the end of the input chain, and save the IPTables configuration to persist between reboots:</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> iptables -D INPUT 5
+<span style="color: #555555">[root@foreman ~]#</span> /sbin/iptables -A INPUT -j REJECT --reject-with icmp-host-prohibited
+<span style="color: #555555">[root@foreman ~]#</span> service iptables save
+<span style="color: #888888">iptables: Saving firewall rules to /etc/sysconfig/iptables:[  OK  ]</span>
+</pre></div>
+
+<br />
+<p><a href="$config['fsrelpath']/images/Foreman_Login.png" data-lightbox="foreman-login" title="Foreman Login Page"  ><img alt="" src="$config['fsrelpath']/images/Foreman_Login.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>With the firewall finally configured, we can now reach the web UI. Since my VM is running at 192.168.134.134, I point my browser at https://192.168.134.134 and use the username of 'admin' and the password of 'changeme' to view the site.  After logging in, you are directed to the dashboard shown below. Note, that you'll need to accept an untrusted connection to visit the site -- this is due to the site's self-signed certificate.</p>
+
+<p><a href="$config['fsrelpath']/images/Foreman_Initial_Dashboard.png" data-lightbox="foreman-initial-dashboard" title="Foreman Initial Dashboard"  ><img alt="" src="$config['fsrelpath']/images/Foreman_Initial_Dashboard.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:100%" /></a></p>
+
+<p><a href="$config['fsrelpath']/images/Navigate_to_Smart_Proxy.png" data-lightbox="smart-proxy-nav" title="Navigating to Smart Proxy"  ><img alt="" src="$config['fsrelpath']/images/Navigate_to_Smart_Proxy.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>With Foreman up and running, it's time to connect Foreman to the Foreman Smart Proxy running in the same VM. Use the menu to navigate to the Smart Proxy configuration</p>
+
+<br /><br /><br />
+<p><a href="$config['fsrelpath']/images/Proxy_Page-no-proxy.png" data-lightbox="proxy-page-no-proxies" title="Smart Proxy Page - No Proxies Configured"  ><img alt="" src="$config['fsrelpath']/images/Proxy_Page-no-proxy.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>Once at the Smart Proxy page, you'll need to click to add a new proxy. </p>
+
+<br /><br /><br /><br /><br />
+<p><a href="$config['fsrelpath']/images/Adding_Proxy.png" data-lightbox="proxy-page-adding-proxy" title="Adding a Smart Proxy"  ><img alt="" src="$config['fsrelpath']/images/Adding_Proxy.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>I chose to call the proxy I'm adding "Local Proxy", and I pointed Foreman to https://foreman.localdomain:8443</p>
 
