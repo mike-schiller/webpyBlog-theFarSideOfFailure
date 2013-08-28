@@ -306,3 +306,88 @@ $def with(config)
 <br /><br /><br /><br /><br />
 <p><a href="$config['fsrelpath']/images/Adding_Proxy.png" data-lightbox="proxy-page-adding-proxy" title="Adding a Smart Proxy"  ><img alt="" src="$config['fsrelpath']/images/Adding_Proxy.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>I chose to call the proxy I'm adding "Local Proxy", and I pointed Foreman to https://foreman.localdomain:8443</p>
 
+<br /><br /><br /><br /><br />
+<p><a href="$config['fsrelpath']/images/Configured_Proxy.png" data-lightbox="proxy-page-configured-proxy" title="Configured Smart Proxy"  ><img alt="" src="$config['fsrelpath']/images/Configured_Proxy.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>After adding, you'll return to the proxy page and should see your new proxy listed along with its capabilities/features. In my case, I see Local Proxy, and features of DHCP, Puppet, Puppet CA, and TFTP.</p>
+
+<br /><br /><br /><br /><br />
+<p><a href="$config['fsrelpath']/images/no_hosts.png" data-lightbox="no-hosts" title="No Hosts"  ><img alt="" src="$config['fsrelpath']/images/no_hosts.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>With the proxy added, we can navigate to hosts, but will discover that Foreman isn't yet aware of any hosts.</p>
+
+<br /><br /><br /><br /><br />
+<p>The first host we'll add is the Foreman itself. To do this, we use the puppet agent command to register.</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> puppet agent --test
+<span style="color: #888888">Warning: Unable to fetch my node definition, but the agent run will continue:</span>
+<span style="color: #888888">Warning: Error 400 on SERVER: Failed to find foreman.localdomain via exec: Execution of &#39;/etc/puppet/node.rb foreman.localdomain&#39; returned 1: </span>
+<span style="color: #888888">Info: Retrieving plugin</span>
+<span style="color: #888888">Info: Caching catalog for foreman.localdomain</span>
+<span style="color: #888888">Info: Applying configuration version &#39;1376219114&#39;</span>
+<span style="color: #888888">Notice: Finished catalog run in 0.04 seconds</span>
+</pre></div>
+
+<p>For some reason, this generates a warning the first time -- perhaps because there isn't yet a node configuration. Running the command a second time, though, succeeds without warning. </p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> puppet agent --test
+<span style="color: #888888">Info: Retrieving plugin</span>
+<span style="color: #888888">Info: Caching catalog for foreman.localdomain</span>
+<span style="color: #888888">Info: Applying configuration version &#39;1376219114&#39;</span>
+<span style="color: #888888">Notice: Finished catalog run in 0.09 seconds</span>
+</pre></div>
+
+<p>
+<a href="$config['fsrelpath']/images/Have_a_Host.png"
+data-lightbox="have-a-host"
+title="Now, we have a host.">
+<img alt="" src="$config['fsrelpath']/images/Have_a_Host.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>
+Now that the server has registered, we see it listed under hosts in foreman.
+</p>
+
+<br /><br /><br /><br /><br /><br /><br /><br />
+<p>
+<a href="$config['fsrelpath']/images/Viewing_a_Host.png"
+data-lightbox="viewing-a-host"
+title="Viewing a host's details.">
+<img alt="" src="$config['fsrelpath']/images/Viewing_a_Host.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>
+Clicking on that host, we can see statistics related to it including hostname, domain, IP address, MAC address, OS, and architecture.
+</p>
+
+<br /><br /><br /><br /><br /><br /><br /><br />
+<p>
+<a href="$config['fsrelpath']/images/report_listing.png"
+data-lightbox="report-listing"
+title="Viewing a report.">
+<img alt="" src="$config['fsrelpath']/images/report_listing.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>
+Clicking on reports, we see that there are two reports available for this host. These correspond to the two times we ran the "puppet agent --test" command. 
+</p>
+
+<br /><br /><br /><br /><br /><br /><br /><br />
+<p>
+<a href="$config['fsrelpath']/images/Report_With_Warnings.png"
+data-lightbox="warning-report"
+title="First report with warnings.">
+<img alt="" src="$config['fsrelpath']/images/Report_With_Warnings.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>
+Looking at the first report, we see the same warnings that our first "puppet agent --test" command generated
+</p>
+
+<br /><br /><br /><br /><br /><br /><br /><br />
+<p>
+<a href="$config['fsrelpath']/images/Warning_Free_Report.png"
+data-lightbox="no-warning-report"
+title="Second report, no warnings.">
+<img alt="" src="$config['fsrelpath']/images/Warning_Free_Report.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>
+The second report is warning free. 
+</p>
+<br /><br /><br /><br /><br /><br /><br /><br />
+
+<p>Finally, we see that the Dashboard, Facts, Audits, and Statistics pages are now populated. </p>
+
+<div class="image-row">
+<div class="image-set">
+<a href="$config['fsrelpath']/images/1_Dashboard.png" data-lighbtox="PopulatedPages"><img alt="" src="$config['fsrelpath']/images/1_Dashboard.png" /></a>
+<a href="$config['fsrelpath']/images/2_Facts.png" data-lighbtox="PopulatedPages"><img alt="" src="$config['fsrelpath']/images/2_Facts.png" /></a>
+<a href="$config['fsrelpath']/images/3_Audits.png" data-lighbtox="PopulatedPages"><img alt="" src="$config['fsrelpath']/images/3_Audits.png" /></a>
+<a href="$config['fsrelpath']/images/4_Statistics.png" data-lighbtox="PopulatedPages"><img alt="" src="$config['fsrelpath']/images/4_Statistics.png" /></a>
+</div>
+</div>
+<p>That wraps up the installation of Foreman, and we've verified that it is at least capable of communicating with puppet clients. Of course, we haven't done anything useful with it yet. </p>
+
+<p>My next article, Unattended Installations With Foreman will go into some simple use cases for Foreman.</p>
