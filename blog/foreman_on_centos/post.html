@@ -1,25 +1,288 @@
 $def with(config)
 <intro>
-<p>I&#39;m in the process of building out several distributed applications based on <a href="http://zookeeper.apache.org">Zookeeper</a>, <a href="http://en.wikipedia.org/wiki/HDFS#Hadoop_Distributed_File_System">HDFS</a>, <a href="http://www.docker.io">Docker</a>, and other components such as a message bus and <a href="http://en.wikipedia.org/wiki/BigTable">Big Table</a>&nbsp;database.</p>
+<p>I&#39;m in the process of building out several distributed applications based on <a href="http://zookeeper.apache.org" target="_blank">Zookeeper</a>, <a href="http://en.wikipedia.org/wiki/HDFS#Hadoop_Distributed_File_System" target="_blank">HDFS</a>, <a href="http://www.docker.io" target="_blank">Docker</a>, and other components such as a message bus and <a href="http://en.wikipedia.org/wiki/BigTable" target="_blank">Big Table</a>&nbsp;database.</p>
 
 <p>While I can develop on shared resources with other developers, it&#39;s often handy to be able to quickly configure and deploy a set of VMs on my MacBook to test things out in a throw-away environment where I can&#39;t step on others&#39; toes.&nbsp;</p>
 
-<p>The SAs I work with use <a href="http://theforeman.org/">Foreman</a>&nbsp;and <a href="https://puppetlabs.com/">Puppet</a>&nbsp;to manage much of our shared infrastructure, so I decided to set up a similar environment on my laptop.&nbsp;</p></intro>
+<p>The SAs I work with use <a href="http://theforeman.org/" target="_blank">Foreman</a>&nbsp;and <a href="https://puppetlabs.com/" target="_blank">Puppet</a>&nbsp;to manage much of our shared infrastructure, so I decided to set up a similar environment on my laptop.&nbsp;</p></intro>
 
-<p>Since my customers generally prefer <a href="http://www.redhat.com/products/enterprise-linux/">RHEL</a>&nbsp;based OSes, I decided to build my Foreman server on CentOS 6.4. On the <a href="http://isoredirect.centos.org/centos/6/isos/x86_64/">CentOS mirror site,</a> I chose a mirror, and downloaded CentOS-6.4-x86_64-minimal.iso.</p>
+<p>Since my customers generally prefer <a href="http://www.redhat.com/products/enterprise-linux/" target="_blank">RHEL</a>&nbsp;based OSes, I decided to build my Foreman server on CentOS 6.4. On the <a href="http://isoredirect.centos.org/centos/6/isos/x86_64/" target="_blank">CentOS mirror site,</a> I chose a mirror, and downloaded CentOS-6.4-x86_64-minimal.iso.</p>
 
 <p>I wanted a private network for my development VMs to facilitate easy PXE installations on new VMs over a non-exposed network. Ultimately, the Foreman VM could be used as an Internet gateway.</p>
 
 <p>By default, VMWare Fusion configures two virtual networks on a Mac. VNET_1 is a host-only network configured with&nbsp; DHCP, and VNET_8 is the default NATted network for VMs. As I wanted my Foreman VM to perform DHCP for new VMs, and as I didn&#39;t want to reconfigure VNET_1, I added a host-only non-DHCP network called VNET_2 by adding the following lines to&nbsp;/Library/Preferences/VMware Fusion/networking and restarting Fusion.</p>
 
-<!-- format this as code w/pygments -->
-answer VNET_2_DHCP no
-answer VNET_2_HOSTONLY_NETMASK 255.255.255.0
-answer VNET_2_HOSTONLY_SUBNET 10.2.1.0
-answer VNET_2_VIRTUAL_ADAPTER yes
-answer VNET_2_VIRTUAL_ADAPTER_ADDR 10.2.1.2
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">answer VNET_2_DHCP no</span>
+<span style="color: #888888">answer VNET_2_HOSTONLY_NETMASK 255.255.255.0</span>
+<span style="color: #888888">answer VNET_2_HOSTONLY_SUBNET 10.2.1.0</span>
+<span style="color: #888888">answer VNET_2_VIRTUAL_ADAPTER yes</span>
+<span style="color: #888888">answer VNET_2_VIRTUAL_ADAPTER_ADDR 10.2.1.2</span>
+</pre></div>
 
 <!-- screenshots should probably have margin-top:-10px. If floated left, margin-left:-25px. If floated right, -5px -->
-<p><a href="$config['fsrelpath']/images/VNET_2.png" data-lightbox="image-1" title="screenshot"  ><img alt="" src="$config['fsrelpath']/images/VNET_2.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>Next, I Set up a VM with two network adapters. Since I want Foreman to manage DHCP and VM configurations on the private network, and since Foremen's DHCP configuration can be a challenge to get working on a secondary interface, I configured the first network to be the host-only VNET_2 (vmnet2) that I added to VMWare Fusion. </p>
+<p><a href="$config['fsrelpath']/images/VNET_2.png" data-lightbox="image-1" title="Adding Primary Network Adapter to VNET_2/vmnet2"  ><img alt="" src="$config['fsrelpath']/images/VNET_2.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>Next, I Set up a VM with two network adapters. Since I want Foreman to manage DHCP and VM configurations on the private network, and since Foremen's DHCP configuration can be a challenge to get working on a secondary interface, I configured the first network to be the host-only VNET_2 (vmnet2) that I added to VMWare Fusion. </p>
 
-<p> blah blah blah</p>
+<div style="clear:both;"></div>
+
+<p><a href="$config['fsrelpath']/images/NAT.png" data-lightbox="image-2" title="Choose NAT for the secondary adapter."  ><img alt="" src="$config['fsrelpath']/images/NAT.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>The second network interface, I configured for NAT.</p>
+
+<p>During the installation, I set the root password. The only other non-default options I chose were to set the VM's hostname to foreman, and choose to use all space on the target drive.</p>
+
+<div style="clear:both;"></div>
+
+<p><a href="$config['fsrelpath']/images/lo_only.png" data-lightbox="image-3" title="No IP addresses were set up during installation."  ><img alt="" src="$config['fsrelpath']/images/lo_only.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:60%" /></a>Since I didn't explicitly configure either network adapter during installation, the VM has no IP addresses upon boot.
+
+<p>Fixing this is pretty simple. The configuration files to edit for the two network adapters are /etc/sysconfig/network-scripts/ifcfg-eth0 and /etc/sysconfig/network-scripts/ifcfg-eth1</p>
+
+<p>For eth0, indicate that the interface shouldn't be managed by the network manager, that the interface should be enabled at boot, and set the IP address and netmask. The resulting file should look like:</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> cat /etc/sysconfig/network-scripts/ifcfg-eth0 
+<span style="color: #888888">DEVICE=eth0</span>
+<span style="color: #888888">HWADDR=00:0C:29:45:9B:34</span>
+<span style="color: #888888">TYPE=Ethernet</span>
+<span style="color: #888888">UUID=5bcd5312-d1e8-4eae-8bfa-65476ecb6fdb</span>
+<span style="color: #888888">ONBOOT=yes</span>
+<span style="color: #888888">NM_CONTROLLED=no</span>
+<span style="color: #888888">BOOTPROTO=static</span>
+<span style="color: #888888">IPADDR=10.2.1.1</span>
+<span style="color: #888888">NETMASK=255.255.255.0</span>
+</pre></div>
+
+<p>For eth0, simply indicate that the device shouldn't be managed by the network manager (NM_CONTROLLED), and set it to enabled at boot (ONBOOT). The resulting file should look like:</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> cat /etc/sysconfig/network-scripts/ifcfg-eth1
+<span style="color: #888888">DEVICE=eth1</span>
+<span style="color: #888888">HWADDR=00:0C:29:E3:65:1B</span>
+<span style="color: #888888">TYPE=Ethernet</span>
+<span style="color: #888888">UUID=48696022-3b34-4d29-bf3d-4e1f196b16ef</span>
+<span style="color: #888888">ONBOOT=yes</span>
+<span style="color: #888888">NM_CONTROLLED=no</span>
+<span style="color: #888888">BOOTPROTO=dhcp</span>
+</pre></div>
+
+<p>To start the interfaces, use the ifup command:</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> ifup eth0
+
+<span style="color: #888888">Determining IP information for eth0... done.</span>
+<span style="color: #555555">[root@foreman ~]#</span> ifup eth1
+</pre></div>
+
+
+<p>There's one more networking issue to take care of before proceeding. Since I set the hostname during installation to 'foreman', and since this virtual machine isn't in DNS, Foreman is going to expect the FQDN to be foreman.localdomain. Foreman will generate a self-signed certificate with that domain and won't be able to connect to the Foreman Smart Proxy unless foreman.localdomain resolves.</p>
+
+<p>To address this issue, we need to add foreman.localdomain to the /etc/hosts file. This step will differ for you if you've named your host something else, or if you have the server in DNS. After making the changes, my /etc/hosts file looks like:</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> cat /etc/hosts
+<span style="color: #888888">127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4 foreman.localdomain</span>
+<span style="color: #888888">::1         localhost localhost.localdomain localhost6 localhost6.localdomain6</span>
+</pre></div>
+
+
+<p>Now, we're finally ready to install Foreman. Foreman for CentOS / RHEL / Fedora depends on the <a href="http://fedoraproject.org/wiki/EPEL" target="_blank">Extra Packages for Enterprise Linux</a> project. Unfortunately, the version of <a href="https://puppetlabs.com/" target="_blank">Puppet</a> in the  EPEL repository for CentOS 6 is a bit out of date. It doesn't even have the <a href="http://docs.puppetlabs.com/puppet/2.7/reference/modules_installing.html" target="_blank">module subcommand</a>. So, we'll start by installing <a href="http://docs.puppetlabs.com/guides/puppetlabs_package_repositories.html" target="_blank">Puppet Labs' yum server</a> as a repository, install Puppet. We'll then install EPEL's yum server as a repository, the Foreman repository, and install Foreman from it.</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888"># Add the Puppet Labs repository</span>
+<span style="color: #888888">rpm -ivh http://yum.puppetlabs.com/el/6/products/i386/puppetlabs-release-6-7.noarch.rpm</span>
+
+<span style="color: #888888"># Install Puppet Server (you&#39;ll be prompted to accept the Puppet repository GPG Key)</span>
+<span style="color: #888888">yum install puppet-server</span>
+
+<span style="color: #888888"># Add the EPEL Repository</span>
+<span style="color: #888888">rpm -ivh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm</span>
+
+<span style="color: #888888"># Add the Foreman Repository</span>
+<span style="color: #888888">yum -y install http://yum.theforeman.org/releases/1.1/el6/x86_64/foreman-release.rpm</span>
+
+<span style="color: #888888"># Install the Foreman Installer Package</span>
+<span style="color: #888888">yum -y install foreman-installer</span>
+</pre></div>
+
+<p>Now, the Foreman Installer is installed and we need to use it to install Foreman itself. The installer will smartly install and configure services such as TFTP, DHCP, and DNS needed to perform unattended installations.</p>
+
+<p>Foreman, via the Foreman Smart Proxy can dynamically control these services, changing their settings on the fly to correspond to your deployment needs. By default, though, it installs/configures TFTP but not DHCP or DNS.</p>
+
+<p>In my case I want it to install and configure DHCP, so, when prompted, I'll have to say no, I don't want to use the default all-in-one setup. The choices I selected when running the setup utility along with the utility's output is quite lengthy. To see the output, expand one of the options below.</p>
+
+
+    <section>
+      <article>
+        <details>
+          <summary>Abbreviated Foreman Installer Output -- Kinda Long.</summary>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> ruby /usr/share/foreman-installer/generate_answers.rb
+<span style="color: #888888">Welcome to the Foreman Installer!</span>
+<span style="color: #888888">---------------------------------</span>
+
+<span style="color: #888888">This installer will help you set up Foreman and the associated extra configuration necessary to get you up and running. There is an interactive shell which will ask you questions, but if you just want to get up and running as fast as possible, answer &#39;yes&#39; to the all-in-one install at the beginning</span>
+
+
+<span style="color: #888888">Ready to start? (y/n)</span>
+<span style="color: #888888">y</span>
+
+<span style="color: #888888">Do you want to use the default all-in-one setup?</span>
+<span style="color: #888888">This will configure Foreman, Foreman-Proxy, Puppet (including a puppetmaster), several puppet environments, TFTP (for provisioning) and sudo (for puppet certificate management) (y/n)</span>
+<span style="color: #888888">n</span>
+
+<span style="color: #888888">Main Config Menu</span>
+<span style="color: #888888">1. Configure Foreman settings</span>
+<span style="color: #888888">2. Configure Foreman_proxy settings</span>
+<span style="color: #888888">3. Configure Puppet settings</span>
+<span style="color: #888888">4. Configure Puppetmaster settings</span>
+<span style="color: #888888">5. Display current config</span>
+<span style="color: #888888">6. Save and Exit</span>
+<span style="color: #888888">7. Exit without Saving</span>
+<span style="color: #888888">Choose an option from the menu... 2</span>
+
+<span style="color: #888888">Current config is:</span>
+<span style="color: #888888">Foreman_proxy is enabled with defaults</span>
+
+
+<span style="color: #888888">Foreman_proxy Config Menu</span>
+<span style="color: #888888">1. Enable foreman_proxy with all defaults</span>
+<span style="color: #888888">2. Disable foreman_proxy completely</span>
+<span style="color: #888888">3. Should Foreman_proxy manage DNS? (default: false) </span>
+<span style="color: #888888">4. Should Foreman_proxy manage TFTP? (default: true) </span>
+<span style="color: #888888">5. Should Foreman_proxy be installed from the stable,rc, or nightly repo?</span>
+<span style="color: #888888">(default: stable) </span>
+<span style="color: #888888">6. Should Foreman_proxy manage Puppet (needed for puppet classes)? (default: true) </span>
+<span style="color: #888888">7. Should Foreman_proxy manage PuppetCA (needed for certificates)? (default: true) </span>
+<span style="color: #888888">8. Should Foreman_proxy manage DHCP? (default: false) </span>
+<span style="color: #888888">9. Add other key/value pair to the config</span>
+<span style="color: #888888">10. Go up to main menu</span>
+<span style="color: #888888">Choose an option from the menu... 3</span>
+<span style="color: #888888">y/n?</span>
+<span style="color: #888888">y</span>
+
+<span style="color: #888888">Current config is:</span>
+<span style="color: #888888">Foreman_proxy is enabled with overrides:</span>
+<span style="color: #888888">--- </span>
+<span style="color: #888888">dns: true</span>
+
+
+<span style="color: #888888">Foreman_proxy Config Menu</span>
+<span style="color: #888888">1. Enable foreman_proxy with all defaults</span>
+<span style="color: #888888">2. Disable foreman_proxy completely</span>
+<span style="color: #888888">3. Should Foreman_proxy manage DNS? (default: false) </span>
+<span style="color: #888888">4. Should Foreman_proxy manage TFTP? (default: true) </span>
+<span style="color: #888888">5. Should Foreman_proxy be installed from the stable,rc, or nightly repo? (default: stable) </span>
+<span style="color: #888888">6. Should Foreman_proxy manage Puppet (needed for puppet classes)? (default: true) </span>
+<span style="color: #888888">7. Should Foreman_proxy manage PuppetCA (needed for certificates)? (default: true) </span>
+<span style="color: #888888">8. Should Foreman_proxy manage DHCP? (default: false) </span>
+<span style="color: #888888">9. Add other key/value pair to the config</span>
+<span style="color: #888888">10. Go up to main menu</span>
+<span style="color: #888888">Choose an option from the menu... 8</span>
+<span style="color: #888888">y/n?</span>
+<span style="color: #888888">y</span>
+
+<span style="color: #888888">Current config is:</span>
+<span style="color: #888888">Foreman_proxy is enabled with overrides:</span>
+<span style="color: #888888">--- </span>
+<span style="color: #888888">dns: true</span>
+<span style="color: #888888">dhcp: true</span>
+
+
+<span style="color: #888888">Foreman_proxy Config Menu</span>
+<span style="color: #888888">1. Enable foreman_proxy with all defaults</span>
+<span style="color: #888888">2. Disable foreman_proxy completely</span>
+<span style="color: #888888">3. Should Foreman_proxy manage DNS? (default: false) </span>
+<span style="color: #888888">4. Should Foreman_proxy manage TFTP? (default: true) </span>
+<span style="color: #888888">5. Should Foreman_proxy be installed from the stable,rc, or nightly repo? (default: stable) </span>
+<span style="color: #888888">6. Should Foreman_proxy manage Puppet (needed for puppet classes)? (default: true) </span>
+<span style="color: #888888">7. Should Foreman_proxy manage PuppetCA (needed for certificates)? (default: true) </span>
+<span style="color: #888888">8. Should Foreman_proxy manage DHCP? (default: false) </span>
+<span style="color: #888888">9. Add other key/value pair to the config</span>
+<span style="color: #888888">10. Go up to main menu</span>
+<span style="color: #888888">Choose an option from the menu... 10</span>
+
+<span style="color: #888888">Main Config Menu</span>
+<span style="color: #888888">1. Configure Foreman settings</span>
+<span style="color: #888888">2. Configure Foreman_proxy settings</span>
+<span style="color: #888888">3. Configure Puppet settings</span>
+<span style="color: #888888">4. Configure Puppetmaster settings</span>
+<span style="color: #888888">5. Display current config</span>
+<span style="color: #888888">6. Save and Exit</span>
+<span style="color: #888888">7. Exit without Saving</span>
+<span style="color: #888888">Choose an option from the menu... 6</span>
+
+<span style="color: #888888">Do you want to run Puppet now with these settings? (y/n)</span>
+<span style="color: #888888">y</span>
+
+<span style="color: #888888">...</span>
+<span style="color: #888888">...</span>
+<span style="color: #888888">...</span>
+
+<span style="color: #888888">Notice: Finished catalog run in 212.00 seconds</span>
+
+<span style="color: #888888"> Okay, you&#39;re all set! Check</span>
+<span style="color: #888888">/usr/share/foreman-installer/foreman_installer/answers.yaml for your config.</span>
+
+<span style="color: #888888">You can apply it in the future as root with:</span>
+<span style="color: #888888">echo include foreman_installer | puppet apply --modulepath /usr/share/foreman-installer -v</span>
+</pre></div>
+
+        </details>
+      </article>
+      <article>
+        <details>
+          <summary>Full Foreman Installer Output -- Very Long!</summary>
+          really long stuff goeshere
+        </details>
+      </article>
+    </section>
+
+<p>At this point we should be able to browse to https://machine-name/ and get to the foreman UI. However, IPTables prevents this. So, we need to configure IPTables to allow HTTP/HTTPS, DNS, DHCP, TFTP, and the Forman Smart Proxy.</p>
+
+<p>We'll want to open up HTTP/HTTPS on both of the VM's interfaces. Additionally, it could be useful to have the Foreman Proxy exposed on both networks, though without a proper DNS entry for it, any Foreman host utilizing the proxy would need to have an entry in its /etc/hosts file pointing foreman.localdomain to the proper IP address (which is pretty ugly).</p>
+
+<p>The other services, though, need only be exposed on the host-only network, which corresponds to eth0 on the VM.</p>
+
+<p>Consequently, we'll add the following rules to IPTables:</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888"># HTTP/HTTPS</span>
+<span style="color: #888888">/sbin/iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT</span>
+<span style="color: #888888">/sbin/iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 443 -j ACCEPT</span>
+
+<span style="color: #888888"># TFTP</span>
+<span style="color: #888888">/sbin/iptables -A INPUT -i eth0 -m state --state NEW -m tcp -p tcp --dport 69 -j ACCEPT</span>
+<span style="color: #888888">/sbin/iptables -A INPUT -i eth0 -m state --state NEW -m udp -p udp --dport 69 -j ACCEPT</span>
+
+<span style="color: #888888"># DHCP</span>
+<span style="color: #888888">/sbin/iptables -A INPUT -i eth0 -m state --state NEW -m udp -p udp --dport 67 -j ACCEPT</span>
+<span style="color: #888888">/sbin/iptables -A INPUT -i eth0 -m state --state NEW -m udp -p udp --dport 68 -j ACCEPT</span>
+
+<span style="color: #888888"># DNS</span>
+<span style="color: #888888">/sbin/iptables -A INPUT -i eth0 -m state --state NEW -m udp -p udp --dport 53 -j ACCEPT</span>
+<span style="color: #888888">/sbin/iptables -A INPUT -i eth0 -m state --state NEW -m tcp -p tcp --dport 53 -j ACCEPT</span>
+
+<span style="color: #888888"># Foreman Proxy -- docs say REST, so this should only be TCP</span>
+<span style="color: #888888">/sbin/iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 8443 -j ACCEPT</span>
+</pre></div>
+
+<p>Pointing a browser at https://192.168.134.132 (the IP address of my VM -- yours will likely be different) I unfortunately found that I could not connect. Taking a look at the IPTables rules, we see why:</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> iptables --line-numbers -L -n -v
+<span style="color: #888888">Chain INPUT (policy ACCEPT 0 packets, 0 bytes)</span>
+<span style="color: #888888">num   pkts bytes target     prot opt in     out     source               destination         </span>
+<span style="color: #888888">1      816  117K ACCEPT     all  --  *      *       0.0.0.0/0            0.0.0.0/0           state RELATED,ESTABLISHED </span>
+<span style="color: #888888">2        0     0 ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0           </span>
+<span style="color: #888888">3        1    60 ACCEPT     all  --  lo     *       0.0.0.0/0            0.0.0.0/0           </span>
+<span style="color: #888888">4        0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:22 </span>
+<span style="color: #888888">5       21  1616 REJECT     all  --  *      *       0.0.0.0/0            0.0.0.0/0           reject-with icmp-host-prohibited </span>
+<span style="color: #888888">6        0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:80 </span>
+<span style="color: #888888">7        0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:443 </span>
+<span style="color: #888888">8        0     0 ACCEPT     tcp  --  eth1   *       0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:69 </span>
+<span style="color: #888888">9        0     0 ACCEPT     udp  --  eth1   *       0.0.0.0/0            0.0.0.0/0           state NEW udp dpt:69 </span>
+<span style="color: #888888">10       0     0 ACCEPT     udp  --  eth1   *       0.0.0.0/0            0.0.0.0/0           state NEW udp dpt:67 </span>
+<span style="color: #888888">11       0     0 ACCEPT     udp  --  eth1   *       0.0.0.0/0            0.0.0.0/0           state NEW udp dpt:68 </span>
+<span style="color: #888888">12       0     0 ACCEPT     udp  --  eth1   *       0.0.0.0/0            0.0.0.0/0           state NEW udp dpt:53 </span>
+<span style="color: #888888">13       0     0 ACCEPT     tcp  --  eth1   *       0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:53 </span>
+<span style="color: #888888">14       0     0 ACCEPT     tcp  --  eth1   *       0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:8443 </span>
+
+<span style="color: #888888">Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)</span>
+<span style="color: #888888">num   pkts bytes target     prot opt in     out     source               destination         </span>
+<span style="color: #888888">1        0     0 REJECT     all  --  *      *       0.0.0.0/0            0.0.0.0/0           reject-with icmp-host-prohibited </span>
+
+<span style="color: #888888">Chain OUTPUT (policy ACCEPT 51 packets, 6724 bytes)</span>
+<span style="color: #888888">num   pkts bytes target     prot opt in     out     source               destination </span>
+</pre></div>
+
+
