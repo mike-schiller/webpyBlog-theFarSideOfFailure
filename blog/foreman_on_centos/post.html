@@ -10,6 +10,7 @@ $def with(config)
 
 <p>I wanted a private network for my development VMs to facilitate easy PXE installations on new VMs over a non-exposed network. Ultimately, the Foreman VM could be used as an Internet gateway.</p>
 
+<h3>Networking Configuration</h3>
 <p>By default, VMWare Fusion configures two virtual networks on a Mac. VNET_1 is a host-only network configured with&nbsp; DHCP, and VNET_8 is the default NATted network for VMs. As I wanted my Foreman VM to perform DHCP for new VMs, and as I didn&#39;t want to reconfigure VNET_1, I added a host-only non-DHCP network called VNET_2 by adding the following lines to&nbsp;/Library/Preferences/VMware Fusion/networking and restarting Fusion.</p>
 
 <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">answer VNET_2_DHCP no</span>
@@ -68,7 +69,7 @@ $def with(config)
 <span style="color: #555555">[root@foreman ~]#</span> ifup eth1
 </pre></div>
 
-
+<h3>Configuring DNS</h3>
 <p>There's one more networking issue to take care of before proceeding. Since I set the hostname during installation to 'foreman', and since this virtual machine isn't in DNS, Foreman is going to expect the FQDN to be foreman.localdomain. Foreman will generate a self-signed certificate with that domain and won't be able to connect to the Foreman Smart Proxy unless foreman.localdomain resolves. On top of this, when we PXE boot other VMs, they will expect foreman.localdomain to resolve. So, we need to install a DNS server to make this happen.</p>
 
 <p>Bind 9 is the very popular full-featured DNS server for UNIX. However, it's overkill for what we're doing here, I didn't get Foreman to automagically configure it properly (perhaps you can do better here), and it requires a good bit of configuraiton even for simple use cases.</p>
@@ -94,6 +95,8 @@ $def with(config)
 <span style="color: #888888">10.2.1.1    foreman foreman.localdomain</span>
 </pre></div>
 
+
+<h3>Installing Foreman</h3>
 <p>Now, we're finally ready to install Foreman. Foreman for CentOS / RHEL / Fedora depends on the <a href="http://fedoraproject.org/wiki/EPEL" target="_blank">Extra Packages for Enterprise Linux</a> project. Unfortunately, the version of <a href="https://puppetlabs.com/" target="_blank">Puppet</a> in the  EPEL repository for CentOS 6 is a bit out of date. It doesn't even have the <a href="http://docs.puppetlabs.com/puppet/2.7/reference/modules_installing.html" target="_blank">module subcommand</a>. So, we'll start by installing <a href="http://docs.puppetlabs.com/guides/puppetlabs_package_repositories.html" target="_blank">Puppet Labs' yum server</a> as a repository, install Puppet. We'll then install EPEL's yum server as a repository, the Foreman repository, and install Foreman from it.</p>
 
 <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888"># Add the Puppet Labs repository</span>
@@ -604,6 +607,8 @@ $def with(config)
       </article>
     </section>
 
+
+<h3>NAT for the Client Machine Network</h3>
 <p>At this point we should be able to browse to https://machine-name/ and get to the foreman UI. However, IPTables prevents this. So, we need to configure IPTables to allow HTTP/HTTPS, DNS, DHCP, TFTP, and the Forman Smart Proxy.</p>
 
 <p>We'll want to open up HTTP/HTTPS on both of the VM's interfaces. Additionally, it could be useful to have the Foreman Proxy exposed on both networks, though without a proper DNS entry for it, any Foreman host utilizing the proxy would need to have an entry in its /etc/hosts file pointing foreman.localdomain to the proper IP address (which is pretty ugly).</p>
@@ -778,10 +783,13 @@ That set the system configuration to enable ipv4 forwarding, but we need to acti
 
 
 <br />
+<h3>The Foreman Web Interface</h3>
 <p><a href="$config['fsrelpath']/images/Foreman_Login.png" data-lightbox="foreman-login" title="Foreman Login Page"  ><img alt="" src="$config['fsrelpath']/images/Foreman_Login.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>With the firewall finally configured, we can now reach the web UI. Since my VM is running at 192.168.134.134, I point my browser at https://192.168.134.134 and use the username of 'admin' and the password of 'changeme' to view the site.  After logging in, you are directed to the dashboard shown below. Note, that you'll need to accept an untrusted connection to visit the site -- this is due to the site's self-signed certificate.</p>
 
 <p><a href="$config['fsrelpath']/images/Foreman_Initial_Dashboard.png" data-lightbox="foreman-initial-dashboard" title="Foreman Initial Dashboard"  ><img alt="" src="$config['fsrelpath']/images/Foreman_Initial_Dashboard.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:100%" /></a></p>
 
+
+<h3>Foreman Smart Proxy Configuration</h3>
 <p><a href="$config['fsrelpath']/images/Navigate_to_Smart_Proxy.png" data-lightbox="smart-proxy-nav" title="Navigating to Smart Proxy"  ><img alt="" src="$config['fsrelpath']/images/Navigate_to_Smart_Proxy.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>With Foreman up and running, it's time to connect Foreman to the Foreman Smart Proxy running in the same VM. Use the menu to navigate to the Smart Proxy configuration</p>
 
 <br /><br /><br />
@@ -797,6 +805,7 @@ That set the system configuration to enable ipv4 forwarding, but we need to acti
 <p><a href="$config['fsrelpath']/images/no_hosts.png" data-lightbox="no-hosts" title="No Hosts"  ><img alt="" src="$config['fsrelpath']/images/no_hosts.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>With the proxy added, we can navigate to hosts, but will discover that Foreman isn't yet aware of any hosts.</p>
 
 <br /><br /><br /><br /><br />
+<h3>Adding Hosts to Foreman</h3>
 <p>The first host we'll add is the Foreman itself. To do this, we use the puppet agent command to register.</p>
 
 <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> puppet agent --test
@@ -873,6 +882,8 @@ The second report is warning free.
 </div>
 </div>
 
+
+<h3>Double Checking DHCPD</h3>
 <p>At this point, it's time to take a look at DHCPD configuration. The Foreman Proxy is supposed to manage this for us, but a common error seems to be that Foreman specifies a router IP not on the same subnet as the IP address assigned to clients.</p>
 
 <p>When this happens, any client you try to PXE boot will fail complaining that there is not a DHCP server on the network. Additionally, you'll likely see repeated DHCPDECLINE error messages in /var/log/boot.log (which doesn't entirely make sense to me, as that's supposedly a log of messages during the foreman host's boot, not the client).</p>
@@ -917,10 +928,18 @@ The second report is warning free.
 <span style="color: #888888">}</span>
 </pre></div>
 
-
+<h3>Conclusion</h3>
 <p>That wraps up the installation of Foreman, and we've verified that it is at least capable of communicating with puppet clients. Of course, we haven't done anything useful with it yet. </p>
 
 <p>My next article, Unattended Installations With Foreman will go into some simple use cases for Foreman.</p>
+
+
+<h3>Related Links</h3>
+<p>I found the following pages to be useful in getting Foreman up and running:</p>
+
+<p><a href="http://www.revsys.com/writings/quicktips/nat.html">Linux NAT HOWTO</a></p>
+
+<p><a href="http://www.youtube.com/watch?v=2dwyzPpFJYQ&feature=youtu.be">Dominic Cleal's video on installing Foreman"</a></p>
 
 $:config['commentBlock']
 
