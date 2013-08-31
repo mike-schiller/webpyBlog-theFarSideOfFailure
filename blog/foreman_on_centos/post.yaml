@@ -23,4 +23,6 @@ contentBlocks:
     leftFooterContent:
         template:
         templateRenderer:
-
+    commentBlock:
+        template:           static/disqus.html
+        templateRenderer:

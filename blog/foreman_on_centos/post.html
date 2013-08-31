@@ -73,16 +73,7 @@ $def with(config)
 
 <p>Bind 9 is the very popular full-featured DNS server for UNIX. However, it's overkill for what we're doing here, I didn't get Foreman to automagically configure it properly (perhaps you can do better here), and it requires a good bit of configuraiton even for simple use cases.</p>
 
-<p>Fortunately, there's another and very simple alternative for Linux. <a href="http://www.thekelleys.org.uk/dnsmasq/doc.html">Dnsmasq</a> is a lightweight and easily configurable DNS server. It will cache lookups from more autoritative servers and in its simplest configuration can read name:IP mappings directly from the /etc/hosts file.</p>
-
-<p>To configure this, we'll first add foreman.localdomain to the /etc/hosts file. This step will differ for you if you've named your host something else, or if you different IP addresses. After making the changes, my /etc/hosts file looks like:</p>
-
-<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888"># cat /etc/hosts</span>
-<span style="color: #888888">127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4</span>
-<span style="color: #888888">::1         localhost localhost.localdomain localhost6 localhost6.localdomain6</span>
-<span style="color: #888888">10.2.1.1    foreman foreman.localdomain</span>
-</pre></div>
-
+<p>Fortunately, there's another and very simple alternative for Linux. <a href="http://www.thekelleys.org.uk/dnsmasq/doc.html">Dnsmasq</a> is a lightweight and easily configurable DNS server. It will cache lookups from more autoritative servers and in its simplest configuration can read name:IP mappings directly from the /etc/hosts file. To install Dnsmasq:</p>
 
 <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888"># Install dnsmask</span>
 <span style="color: #888888">yum install dnsmasq</span>
@@ -94,6 +85,14 @@ $def with(config)
 <span style="color: #888888">service dnsmasq start</span>
 </pre></div>
 
+
+<p>To configure this, we'll first add foreman.localdomain to the /etc/hosts file. This step will differ for you if you've named your host something else, or if you different IP addresses. After making the changes, my /etc/hosts file looks like:</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888"># cat /etc/hosts</span>
+<span style="color: #888888">127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4</span>
+<span style="color: #888888">::1         localhost localhost.localdomain localhost6 localhost6.localdomain6</span>
+<span style="color: #888888">10.2.1.1    foreman foreman.localdomain</span>
+</pre></div>
 
 <p>Now, we're finally ready to install Foreman. Foreman for CentOS / RHEL / Fedora depends on the <a href="http://fedoraproject.org/wiki/EPEL" target="_blank">Extra Packages for Enterprise Linux</a> project. Unfortunately, the version of <a href="https://puppetlabs.com/" target="_blank">Puppet</a> in the  EPEL repository for CentOS 6 is a bit out of date. It doesn't even have the <a href="http://docs.puppetlabs.com/puppet/2.7/reference/modules_installing.html" target="_blank">module subcommand</a>. So, we'll start by installing <a href="http://docs.puppetlabs.com/guides/puppetlabs_package_repositories.html" target="_blank">Puppet Labs' yum server</a> as a repository, install Puppet. We'll then install EPEL's yum server as a repository, the Foreman repository, and install Foreman from it.</p>
 
@@ -922,3 +921,7 @@ The second report is warning free.
 <p>That wraps up the installation of Foreman, and we've verified that it is at least capable of communicating with puppet clients. Of course, we haven't done anything useful with it yet. </p>
 
 <p>My next article, Unattended Installations With Foreman will go into some simple use cases for Foreman.</p>
+
+$:config['commentBlock']
+
+

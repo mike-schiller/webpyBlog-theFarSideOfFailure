@@ -18,10 +18,13 @@ $def with(config,content)
       </div>
     </div>
     <div style="width:100%;float:left">
-        <div style="width:50%;float:left;text-align:left">
+        <div style="width:33%;float:left;text-align:left">
             $content['postDate']
         </div>
-        <div style="width:50%;float:left;text-align:right">
+        <div style="width:34%;float:left;text-align:center">
+            <a data-ajax="false" href="$config['postWebPath']#disqus_thread"></a>
+        </div>
+        <div style="width:33%;float:left;text-align:right">
             <a data-ajax="false" href="$config['postWebPath']">Read Full Post >></a>
         </div>
     </div>
