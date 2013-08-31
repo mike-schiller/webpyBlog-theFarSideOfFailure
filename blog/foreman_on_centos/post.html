@@ -69,13 +69,29 @@ $def with(config)
 </pre></div>
 
 
-<p>There's one more networking issue to take care of before proceeding. Since I set the hostname during installation to 'foreman', and since this virtual machine isn't in DNS, Foreman is going to expect the FQDN to be foreman.localdomain. Foreman will generate a self-signed certificate with that domain and won't be able to connect to the Foreman Smart Proxy unless foreman.localdomain resolves.</p>
+<p>There's one more networking issue to take care of before proceeding. Since I set the hostname during installation to 'foreman', and since this virtual machine isn't in DNS, Foreman is going to expect the FQDN to be foreman.localdomain. Foreman will generate a self-signed certificate with that domain and won't be able to connect to the Foreman Smart Proxy unless foreman.localdomain resolves. On top of this, when we PXE boot other VMs, they will expect foreman.localdomain to resolve. So, we need to install a DNS server to make this happen.</p>
 
-<p>To address this issue, we need to add foreman.localdomain to the /etc/hosts file. This step will differ for you if you've named your host something else, or if you have the server in DNS. After making the changes, my /etc/hosts file looks like:</p>
+<p>Bind 9 is the very popular full-featured DNS server for UNIX. However, it's overkill for what we're doing here, I didn't get Foreman to automagically configure it properly (perhaps you can do better here), and it requires a good bit of configuraiton even for simple use cases.</p>
 
-<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> cat /etc/hosts
-<span style="color: #888888">127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4 foreman.localdomain</span>
+<p>Fortunately, there's another and very simple alternative for Linux. <a href="http://www.thekelleys.org.uk/dnsmasq/doc.html">Dnsmasq</a> is a lightweight and easily configurable DNS server. It will cache lookups from more autoritative servers and in its simplest configuration can read name:IP mappings directly from the /etc/hosts file.</p>
+
+<p>To configure this, we'll first add foreman.localdomain to the /etc/hosts file. This step will differ for you if you've named your host something else, or if you different IP addresses. After making the changes, my /etc/hosts file looks like:</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888"># cat /etc/hosts</span>
+<span style="color: #888888">127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4</span>
 <span style="color: #888888">::1         localhost localhost.localdomain localhost6 localhost6.localdomain6</span>
+<span style="color: #888888">10.2.1.1    foreman foreman.localdomain</span>
+</pre></div>
+
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888"># Install dnsmask</span>
+<span style="color: #888888">yum install dnsmasq</span>
+
+<span style="color: #888888"># Configure dnsmasq to start at boot</span>
+<span style="color: #888888">chkconfig dnsmasq on</span>
+
+<span style="color: #888888"># Start dnsmasq immediately</span>
+<span style="color: #888888">service dnsmasq start</span>
 </pre></div>
 
 
@@ -97,29 +113,34 @@ $def with(config)
 <span style="color: #888888">yum -y install foreman-installer</span>
 </pre></div>
 
-<p>Now, the Foreman Installer is installed and we need to use it to install Foreman itself. The installer will smartly install and configure services such as TFTP, DHCP, and DNS needed to perform unattended installations.</p>
+<p>Now, the Foreman Installer is installed and we need to use it to install Foreman itself. The installer will smartly install and configure services such as TFTP and DHCP needed to perform unattended installations.</p>
 
 <p>Foreman, via the Foreman Smart Proxy can dynamically control these services, changing their settings on the fly to correspond to your deployment needs. By default, though, it installs/configures TFTP but not DHCP or DNS.</p>
 
-<p>In my case I want it to install and configure DHCP, so, when prompted, I'll have to say no, I don't want to use the default all-in-one setup. The choices I selected when running the setup utility along with the utility's output is quite lengthy. To see the output, expand one of the options below.</p>
+<p>In my case I want it to install and configure DHCP (though not DNS -- which I'll go into later), so, when prompted, I'll have to say no, I don't want to use the default all-in-one setup. The choices I selected when running the setup utility along with the utility's output is quite lengthy. To see the output, expand one of the options below.</p>
 
 
     <section>
       <article>
         <details>
           <summary>Abbreviated Foreman Installer Output -- Kinda Long.</summary>
-<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> ruby /usr/share/foreman-installer/generate_answers.rb
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> ruby /usr/share/foreman-installer/generate_answers.rb 
 <span style="color: #888888">Welcome to the Foreman Installer!</span>
 <span style="color: #888888">---------------------------------</span>
 
-<span style="color: #888888">This installer will help you set up Foreman and the associated extra configuration necessary to get you up and running. There is an interactive shell which will ask you questions, but if you just want to get up and running as fast as possible, answer &#39;yes&#39; to the all-in-one install at the beginning</span>
+<span style="color: #888888">This installer will help you set up Foreman and the associated extra</span>
+<span style="color: #888888">configuration necessary to get you up and running. There is an interactive shell</span>
+<span style="color: #888888">which will ask you questions, but if you just want to get up and running as fast</span>
+<span style="color: #888888">as possible, answer &#39;yes&#39; to the all-in-one install at the beginning</span>
 
 
 <span style="color: #888888">Ready to start? (y/n)</span>
 <span style="color: #888888">y</span>
 
 <span style="color: #888888">Do you want to use the default all-in-one setup?</span>
-<span style="color: #888888">This will configure Foreman, Foreman-Proxy, Puppet (including a puppetmaster), several puppet environments, TFTP (for provisioning) and sudo (for puppet certificate management) (y/n)</span>
+<span style="color: #888888">This will configure Foreman, Foreman-Proxy, Puppet (including a puppetmaster),</span>
+<span style="color: #888888">several puppet environments, TFTP (for provisioning) and sudo (for puppet</span>
+<span style="color: #888888">certificate management) (y/n)</span>
 <span style="color: #888888">n</span>
 
 <span style="color: #888888">Main Config Menu</span>
@@ -139,13 +160,15 @@ $def with(config)
 <span style="color: #888888">Foreman_proxy Config Menu</span>
 <span style="color: #888888">1. Enable foreman_proxy with all defaults</span>
 <span style="color: #888888">2. Disable foreman_proxy completely</span>
-<span style="color: #888888">3. Should Foreman_proxy manage DNS? (default: false) </span>
-<span style="color: #888888">4. Should Foreman_proxy manage TFTP? (default: true) </span>
+<span style="color: #888888">3. Should Foreman_proxy manage DHCP? (default: false) </span>
+<span style="color: #888888">4. Should Foreman_proxy manage PuppetCA (needed for certificates)? (default:</span>
+<span style="color: #888888">true) </span>
 <span style="color: #888888">5. Should Foreman_proxy be installed from the stable,rc, or nightly repo?</span>
 <span style="color: #888888">(default: stable) </span>
-<span style="color: #888888">6. Should Foreman_proxy manage Puppet (needed for puppet classes)? (default: true) </span>
-<span style="color: #888888">7. Should Foreman_proxy manage PuppetCA (needed for certificates)? (default: true) </span>
-<span style="color: #888888">8. Should Foreman_proxy manage DHCP? (default: false) </span>
+<span style="color: #888888">6. Should Foreman_proxy manage TFTP? (default: true) </span>
+<span style="color: #888888">7. Should Foreman_proxy manage DNS? (default: false) </span>
+<span style="color: #888888">8. Should Foreman_proxy manage Puppet (needed for puppet classes)? (default:</span>
+<span style="color: #888888">true) </span>
 <span style="color: #888888">9. Add other key/value pair to the config</span>
 <span style="color: #888888">10. Go up to main menu</span>
 <span style="color: #888888">Choose an option from the menu... 3</span>
@@ -155,40 +178,21 @@ $def with(config)
 <span style="color: #888888">Current config is:</span>
 <span style="color: #888888">Foreman_proxy is enabled with overrides:</span>
 <span style="color: #888888">--- </span>
-<span style="color: #888888">dns: true</span>
-
-
-<span style="color: #888888">Foreman_proxy Config Menu</span>
-<span style="color: #888888">1. Enable foreman_proxy with all defaults</span>
-<span style="color: #888888">2. Disable foreman_proxy completely</span>
-<span style="color: #888888">3. Should Foreman_proxy manage DNS? (default: false) </span>
-<span style="color: #888888">4. Should Foreman_proxy manage TFTP? (default: true) </span>
-<span style="color: #888888">5. Should Foreman_proxy be installed from the stable,rc, or nightly repo? (default: stable) </span>
-<span style="color: #888888">6. Should Foreman_proxy manage Puppet (needed for puppet classes)? (default: true) </span>
-<span style="color: #888888">7. Should Foreman_proxy manage PuppetCA (needed for certificates)? (default: true) </span>
-<span style="color: #888888">8. Should Foreman_proxy manage DHCP? (default: false) </span>
-<span style="color: #888888">9. Add other key/value pair to the config</span>
-<span style="color: #888888">10. Go up to main menu</span>
-<span style="color: #888888">Choose an option from the menu... 8</span>
-<span style="color: #888888">y/n?</span>
-<span style="color: #888888">y</span>
-
-<span style="color: #888888">Current config is:</span>
-<span style="color: #888888">Foreman_proxy is enabled with overrides:</span>
-<span style="color: #888888">--- </span>
-<span style="color: #888888">dns: true</span>
 <span style="color: #888888">dhcp: true</span>
 
 
 <span style="color: #888888">Foreman_proxy Config Menu</span>
 <span style="color: #888888">1. Enable foreman_proxy with all defaults</span>
 <span style="color: #888888">2. Disable foreman_proxy completely</span>
-<span style="color: #888888">3. Should Foreman_proxy manage DNS? (default: false) </span>
-<span style="color: #888888">4. Should Foreman_proxy manage TFTP? (default: true) </span>
-<span style="color: #888888">5. Should Foreman_proxy be installed from the stable,rc, or nightly repo? (default: stable) </span>
-<span style="color: #888888">6. Should Foreman_proxy manage Puppet (needed for puppet classes)? (default: true) </span>
-<span style="color: #888888">7. Should Foreman_proxy manage PuppetCA (needed for certificates)? (default: true) </span>
-<span style="color: #888888">8. Should Foreman_proxy manage DHCP? (default: false) </span>
+<span style="color: #888888">3. Should Foreman_proxy manage DHCP? (default: false) </span>
+<span style="color: #888888">4. Should Foreman_proxy manage PuppetCA (needed for certificates)? (default:</span>
+<span style="color: #888888">true) </span>
+<span style="color: #888888">5. Should Foreman_proxy be installed from the stable,rc, or nightly repo?</span>
+<span style="color: #888888">(default: stable) </span>
+<span style="color: #888888">6. Should Foreman_proxy manage TFTP? (default: true) </span>
+<span style="color: #888888">7. Should Foreman_proxy manage DNS? (default: false) </span>
+<span style="color: #888888">8. Should Foreman_proxy manage Puppet (needed for puppet classes)? (default:</span>
+<span style="color: #888888">true) </span>
 <span style="color: #888888">9. Add other key/value pair to the config</span>
 <span style="color: #888888">10. Go up to main menu</span>
 <span style="color: #888888">Choose an option from the menu... 10</span>
@@ -205,18 +209,18 @@ $def with(config)
 
 <span style="color: #888888">Do you want to run Puppet now with these settings? (y/n)</span>
 <span style="color: #888888">y</span>
-
 <span style="color: #888888">...</span>
 <span style="color: #888888">...</span>
 <span style="color: #888888">...</span>
-
-<span style="color: #888888">Notice: Finished catalog run in 212.00 seconds</span>
+<span style="color: #888888">Notice: Finished catalog run in 184.93 seconds</span>
 
 <span style="color: #888888"> Okay, you&#39;re all set! Check</span>
-<span style="color: #888888">/usr/share/foreman-installer/foreman_installer/answers.yaml for your config.</span>
+<span style="color: #888888">/usr/share/foreman-installer/foreman_installer/answers.yaml for your</span>
+<span style="color: #888888">config.</span>
 
-<span style="color: #888888">You can apply it in the future as root with:</span>
-<span style="color: #888888">echo include foreman_installer | puppet apply --modulepath /usr/share/foreman-installer -v</span>
+<span style="color: #888888"> You can apply it in the future as root with:</span>
+<span style="color: #888888">  echo include foreman_installer | puppet apply --modulepath</span>
+<span style="color: #888888">/usr/share/foreman-installer -v</span>
 </pre></div>
 
         </details>
@@ -224,7 +228,379 @@ $def with(config)
       <article>
         <details>
           <summary>Full Foreman Installer Output -- Very Long!</summary>
-          really long stuff goeshere
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> ruby /usr/share/foreman-installer/generate_answers.rb 
+<span style="color: #888888">Welcome to the Foreman Installer!</span>
+<span style="color: #888888">---------------------------------</span>
+
+<span style="color: #888888">This installer will help you set up Foreman and the associated extra</span>
+<span style="color: #888888">configuration necessary to get you up and running. There is an interactive shell</span>
+<span style="color: #888888">which will ask you questions, but if you just want to get up and running as fast</span>
+<span style="color: #888888">as possible, answer &#39;yes&#39; to the all-in-one install at the beginning</span>
+
+
+<span style="color: #888888">Ready to start? (y/n)</span>
+<span style="color: #888888">y</span>
+
+<span style="color: #888888">Do you want to use the default all-in-one setup?</span>
+<span style="color: #888888">This will configure Foreman, Foreman-Proxy, Puppet (including a puppetmaster),</span>
+<span style="color: #888888">several puppet environments, TFTP (for provisioning) and sudo (for puppet</span>
+<span style="color: #888888">certificate management) (y/n)</span>
+<span style="color: #888888">n</span>
+
+<span style="color: #888888">Main Config Menu</span>
+<span style="color: #888888">1. Configure Foreman settings</span>
+<span style="color: #888888">2. Configure Foreman_proxy settings</span>
+<span style="color: #888888">3. Configure Puppet settings</span>
+<span style="color: #888888">4. Configure Puppetmaster settings</span>
+<span style="color: #888888">5. Display current config</span>
+<span style="color: #888888">6. Save and Exit</span>
+<span style="color: #888888">7. Exit without Saving</span>
+<span style="color: #888888">Choose an option from the menu... 2</span>
+
+<span style="color: #888888">Current config is:</span>
+<span style="color: #888888">Foreman_proxy is enabled with defaults</span>
+
+
+<span style="color: #888888">Foreman_proxy Config Menu</span>
+<span style="color: #888888">1. Enable foreman_proxy with all defaults</span>
+<span style="color: #888888">2. Disable foreman_proxy completely</span>
+<span style="color: #888888">3. Should Foreman_proxy manage DHCP? (default: false) </span>
+<span style="color: #888888">4. Should Foreman_proxy manage PuppetCA (needed for certificates)? (default:</span>
+<span style="color: #888888">true) </span>
+<span style="color: #888888">5. Should Foreman_proxy be installed from the stable,rc, or nightly repo?</span>
+<span style="color: #888888">(default: stable) </span>
+<span style="color: #888888">6. Should Foreman_proxy manage TFTP? (default: true) </span>
+<span style="color: #888888">7. Should Foreman_proxy manage DNS? (default: false) </span>
+<span style="color: #888888">8. Should Foreman_proxy manage Puppet (needed for puppet classes)? (default:</span>
+<span style="color: #888888">true) </span>
+<span style="color: #888888">9. Add other key/value pair to the config</span>
+<span style="color: #888888">10. Go up to main menu</span>
+<span style="color: #888888">Choose an option from the menu... 3</span>
+<span style="color: #888888">y/n?</span>
+<span style="color: #888888">y</span>
+
+<span style="color: #888888">Current config is:</span>
+<span style="color: #888888">Foreman_proxy is enabled with overrides:</span>
+<span style="color: #888888">--- </span>
+<span style="color: #888888">dhcp: true</span>
+
+
+<span style="color: #888888">Foreman_proxy Config Menu</span>
+<span style="color: #888888">1. Enable foreman_proxy with all defaults</span>
+<span style="color: #888888">2. Disable foreman_proxy completely</span>
+<span style="color: #888888">3. Should Foreman_proxy manage DHCP? (default: false) </span>
+<span style="color: #888888">4. Should Foreman_proxy manage PuppetCA (needed for certificates)? (default:</span>
+<span style="color: #888888">true) </span>
+<span style="color: #888888">5. Should Foreman_proxy be installed from the stable,rc, or nightly repo?</span>
+<span style="color: #888888">(default: stable) </span>
+<span style="color: #888888">6. Should Foreman_proxy manage TFTP? (default: true) </span>
+<span style="color: #888888">7. Should Foreman_proxy manage DNS? (default: false) </span>
+<span style="color: #888888">8. Should Foreman_proxy manage Puppet (needed for puppet classes)? (default:</span>
+<span style="color: #888888">true) </span>
+<span style="color: #888888">9. Add other key/value pair to the config</span>
+<span style="color: #888888">10. Go up to main menu</span>
+<span style="color: #888888">Choose an option from the menu... 10</span>
+
+<span style="color: #888888">Main Config Menu</span>
+<span style="color: #888888">1. Configure Foreman settings</span>
+<span style="color: #888888">2. Configure Foreman_proxy settings</span>
+<span style="color: #888888">3. Configure Puppet settings</span>
+<span style="color: #888888">4. Configure Puppetmaster settings</span>
+<span style="color: #888888">5. Display current config</span>
+<span style="color: #888888">6. Save and Exit</span>
+<span style="color: #888888">7. Exit without Saving</span>
+<span style="color: #888888">Choose an option from the menu... 6</span>
+
+<span style="color: #888888">Do you want to run Puppet now with these settings? (y/n)</span>
+<span style="color: #888888">y</span>
+<span style="color: #888888">Info: Loading facts in /usr/share/foreman-installer/concat/lib/facter/concat_basedir.rb</span>
+<span style="color: #888888">Info: Loading facts in /usr/share/foreman-installer/postgresql/lib/facter/postgres_default_version.rb</span>
+<span style="color: #888888">Info: Loading facts in /usr/share/foreman-installer/stdlib/lib/facter/root_home.rb</span>
+<span style="color: #888888">Info: Loading facts in /usr/share/foreman-installer/stdlib/lib/facter/pe_version.rb</span>
+<span style="color: #888888">Info: Loading facts in /usr/share/foreman-installer/stdlib/lib/facter/puppet_vardir.rb</span>
+<span style="color: #888888">Warning: Config file /etc/puppet/hiera.yaml not found, using Hiera defaults</span>
+<span style="color: #888888">Info: Loading facts in /usr/share/foreman-installer/concat/lib/facter/concat_basedir.rb</span>
+<span style="color: #888888">Info: Loading facts in /usr/share/foreman-installer/postgresql/lib/facter/postgres_default_version.rb</span>
+<span style="color: #888888">Info: Loading facts in /usr/share/foreman-installer/stdlib/lib/facter/root_home.rb</span>
+<span style="color: #888888">Info: Loading facts in /usr/share/foreman-installer/stdlib/lib/facter/pe_version.rb</span>
+<span style="color: #888888">Info: Loading facts in /usr/share/foreman-installer/stdlib/lib/facter/puppet_vardir.rb</span>
+<span style="color: #888888">Info: Applying configuration version &#39;1377738109&#39;</span>
+<span style="color: #888888">Notice: /File[/var/lib/puppet/concat]/ensure: created</span>
+<span style="color: #888888">Notice: /File[/var/lib/puppet/concat/bin]/ensure: created</span>
+<span style="color: #888888">Notice: /File[/var/lib/puppet/concat/bin/concatfragments.sh]/ensure: defined content as &#39;{md5}88a59747f75834fad4827c4ab6087a81&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Install/Foreman::Install::Repos[foreman]/Yumrepo[foreman]/descr: descr changed &#39;foreman&#39; to &#39;Foreman stable repository&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Install/Foreman::Install::Repos[foreman]/Yumrepo[foreman]/gpgcheck: gpgcheck changed &#39;0&#39; to &#39;1&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Install/Foreman::Install::Repos[foreman]/Yumrepo[foreman]/gpgkey: gpgkey changed &#39;&#39; to &#39;http://yum.theforeman.org/RPM-GPG-KEY-foreman&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman_proxy::Tftp/Package[wget]/ensure: created</span>
+<span style="color: #888888">Notice: /Stage[main]/Postgresql::Client/Package[postgresql-client]/ensure: created</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Install/Foreman::Install::Repos[foreman]/Yumrepo[foreman-source]/descr: descr changed &#39;foreman-source&#39; to &#39;Foreman stable source repository&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Install/Foreman::Install::Repos[foreman]/Yumrepo[foreman-source]/gpgcheck: gpgcheck changed &#39;0&#39; to &#39;1&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Install/Foreman::Install::Repos[foreman]/Yumrepo[foreman-source]/gpgkey: gpgkey changed &#39;&#39; to &#39;http://yum.theforeman.org/RPM-GPG-KEY-foreman&#39;</span>
+<span style="color: #888888">Info: create new repo foreman_proxy-source in file /etc/yum.repos.d/foreman_proxy-source.repo</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman_proxy::Install/Foreman::Install::Repos[foreman_proxy]/Yumrepo[foreman_proxy-source]/descr: descr changed &#39;&#39; to &#39;Foreman stable source repository&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman_proxy::Install/Foreman::Install::Repos[foreman_proxy]/Yumrepo[foreman_proxy-source]/baseurl: baseurl changed &#39;&#39; to &#39;http://yum.theforeman.org/releases/latest/el6/source&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman_proxy::Install/Foreman::Install::Repos[foreman_proxy]/Yumrepo[foreman_proxy-source]/enabled: enabled changed &#39;&#39; to &#39;0&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman_proxy::Install/Foreman::Install::Repos[foreman_proxy]/Yumrepo[foreman_proxy-source]/gpgcheck: gpgcheck changed &#39;&#39; to &#39;1&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman_proxy::Install/Foreman::Install::Repos[foreman_proxy]/Yumrepo[foreman_proxy-source]/gpgkey: gpgkey changed &#39;&#39; to &#39;http://yum.theforeman.org/RPM-GPG-KEY-foreman&#39;</span>
+<span style="color: #888888">Info: changing mode of /etc/yum.repos.d/foreman_proxy-source.repo from 600 to 644</span>
+<span style="color: #888888">Info: create new repo foreman_proxy in file /etc/yum.repos.d/foreman_proxy.repo</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman_proxy::Install/Foreman::Install::Repos[foreman_proxy]/Yumrepo[foreman_proxy]/descr: descr changed &#39;&#39; to &#39;Foreman stable repository&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman_proxy::Install/Foreman::Install::Repos[foreman_proxy]/Yumrepo[foreman_proxy]/baseurl: baseurl changed &#39;&#39; to &#39;http://yum.theforeman.org/releases/latest/el6/$$basearch&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman_proxy::Install/Foreman::Install::Repos[foreman_proxy]/Yumrepo[foreman_proxy]/enabled: enabled changed &#39;&#39; to &#39;1&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman_proxy::Install/Foreman::Install::Repos[foreman_proxy]/Yumrepo[foreman_proxy]/gpgcheck: gpgcheck changed &#39;&#39; to &#39;1&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman_proxy::Install/Foreman::Install::Repos[foreman_proxy]/Yumrepo[foreman_proxy]/gpgkey: gpgkey changed &#39;&#39; to &#39;http://yum.theforeman.org/RPM-GPG-KEY-foreman&#39;</span>
+<span style="color: #888888">Info: changing mode of /etc/yum.repos.d/foreman_proxy.repo from 600 to 644</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Install/Package[foreman-postgresql]/ensure: created</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Install/Package[foreman-selinux]/ensure: created</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Config::Enc/File[/var/lib/puppet/yaml]/ensure: created</span>
+<span style="color: #888888">Notice: /File[/usr/lib/ruby/site_ruby/1.8/puppet/reports/foreman.rb]/ensure: defined content as &#39;{md5}360ba3c69d65c0072cc5ee0dafa6caef&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Postgresql::Server/Package[postgresql-server]/ensure: created</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman_proxy::Install/Package[foreman-proxy]/ensure: created</span>
+<span style="color: #888888">Info: Class[Foreman_proxy::Install]: Scheduling refresh of Class[Foreman_proxy::Config]</span>
+<span style="color: #888888">Notice: /File[/etc/sysconfig/dhcpd]/ensure: created</span>
+<span style="color: #888888">Info: /File[/etc/sysconfig/dhcpd]: Scheduling refresh of Service[dhcpd]</span>
+<span style="color: #888888">Notice: /Stage[main]/Dhcp/Concat_fragment[dhcp.hosts+01_main.hosts]/content: content changed &#39;&#39; to &#39;# static DHCP hosts</span>
+<span style="color: #888888">&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Dhcp/Concat_fragment[dhcp.conf+01_main.dhcp]/content: content changed &#39;&#39; to &#39;# dhcpd.conf</span>
+<span style="color: #888888">omapi-port 7911;</span>
+
+<span style="color: #888888">default-lease-time 600;</span>
+<span style="color: #888888">max-lease-time 7200;</span>
+
+
+<span style="color: #888888">ddns-update-style none;</span>
+
+<span style="color: #888888">option domain-name &quot;localdomain&quot;;</span>
+<span style="color: #888888">option domain-name-servers 10.2.1.1;</span>
+
+<span style="color: #888888">allow booting;</span>
+<span style="color: #888888">allow bootp;</span>
+
+<span style="color: #888888">option fqdn.no-client-update    on;  # set the &quot;O&quot; and &quot;S&quot; flag bits</span>
+<span style="color: #888888">option fqdn.rcode2            255;</span>
+<span style="color: #888888">option pxegrub code 150 = text ;</span>
+
+<span style="color: #888888"># PXE Handoff.</span>
+<span style="color: #888888">next-server 10.2.1.1;</span>
+<span style="color: #888888">filename &quot;pxelinux.0&quot;;</span>
+
+<span style="color: #888888">log-facility local7;</span>
+
+<span style="color: #888888">include &quot;/etc/dhcp/dhcpd.hosts&quot;;</span>
+<span style="color: #888888">&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Dhcp/Package[dhcp]/ensure: created</span>
+<span style="color: #888888">Notice: /Stage[main]/Dhcp/Concat_build[dhcp.hosts]/target: *.hosts used for ordering</span>
+<span style="color: #888888">Info: /Stage[main]/Dhcp/Concat_build[dhcp.hosts]: Scheduling refresh of Service[dhcpd]</span>
+<span style="color: #888888">Notice: /Stage[main]/Tftp::Install/Package[tftp-server]/ensure: created</span>
+<span style="color: #888888">Notice: /Stage[main]/Tftp::Install/Package[syslinux]/ensure: created</span>
+<span style="color: #888888">Info: Class[Tftp::Install]: Scheduling refresh of Class[Tftp::Config]</span>
+<span style="color: #888888">Info: Class[Tftp::Config]: Scheduling refresh of Xinetd::Service[tftp]</span>
+<span style="color: #888888">Notice: /File[/etc/tftpd.map]/ensure: defined content as &#39;{md5}e25509e3ae895f72cf1671b614890797&#39;</span>
+<span style="color: #888888">Info: /File[/etc/tftpd.map]: Scheduling refresh of Class[Xinetd]</span>
+<span style="color: #888888">Info: Class[Xinetd]: Scheduling refresh of Service[xinetd]</span>
+<span style="color: #888888">Notice: /File[/var/lib/tftpboot//menu.c32]/ensure: defined content as &#39;{md5}73308b382ddddfb212de61895648d765&#39;</span>
+<span style="color: #888888">Notice: /File[/var/lib/tftpboot//chain.c32]/ensure: defined content as &#39;{md5}a068c7ca7159b708c34a1389c5e75ba0&#39;</span>
+<span style="color: #888888">Notice: /File[/var/lib/tftpboot//memdisk]/ensure: defined content as &#39;{md5}f2cb2d76aa181eecfd102c1a042aacb2&#39;</span>
+<span style="color: #888888">Notice: /File[/var/lib/tftpboot//pxelinux.0]/ensure: defined content as &#39;{md5}869e4a77638e71c9d7042a55fcfb9992&#39;</span>
+<span style="color: #888888">Info: FileBucket adding {md5}9ff8cc688dd9f0dfc45e5afd25c427a7</span>
+<span style="color: #888888">Info: /File[/etc/xinetd.conf]: Filebucketed /etc/xinetd.conf to puppet with sum 9ff8cc688dd9f0dfc45e5afd25c427a7</span>
+<span style="color: #888888">Notice: /File[/etc/xinetd.conf]/content: content changed &#39;{md5}9ff8cc688dd9f0dfc45e5afd25c427a7&#39; to &#39;{md5}1680192de4cef61a23dca13cdfff07c7&#39;</span>
+<span style="color: #888888">Notice: /File[/etc/xinetd.conf]/mode: mode changed &#39;0600&#39; to &#39;0644&#39;</span>
+<span style="color: #888888">Info: FileBucket adding {md5}678efd3887a91cd4e0955aa6c8b12257</span>
+<span style="color: #888888">Info: /File[/etc/xinetd.d/tftp]: Filebucketed /etc/xinetd.d/tftp to puppet with sum 678efd3887a91cd4e0955aa6c8b12257</span>
+<span style="color: #888888">Notice: /File[/etc/xinetd.d/tftp]/content: content changed &#39;{md5}678efd3887a91cd4e0955aa6c8b12257&#39; to &#39;{md5}d0826233b3460441ca5132d7609f522f&#39;</span>
+<span style="color: #888888">Info: /File[/etc/xinetd.d/tftp]: Scheduling refresh of Service[xinetd]</span>
+<span style="color: #888888">Notice: /Stage[main]/Apache::Install/Package[httpd]/ensure: created</span>
+<span style="color: #888888">Info: /Stage[main]/Apache::Install/Package[httpd]: Scheduling refresh of Service[httpd]</span>
+<span style="color: #888888">Notice: /File[/var/www]/owner: owner changed &#39;root&#39; to &#39;apache&#39;</span>
+<span style="color: #888888">Notice: /File[/var/www]/group: group changed &#39;root&#39; to &#39;apache&#39;</span>
+<span style="color: #888888">Notice: /File[/var/cache/mod_ssl]/ensure: created</span>
+<span style="color: #888888">Info: /File[/var/cache/mod_ssl]: Scheduling refresh of Exec[reload-apache]</span>
+<span style="color: #888888">Notice: /Stage[main]/Passenger::Install::Scl/Package[ruby193-rubygem-passenger-native]/ensure: created</span>
+<span style="color: #888888">Notice: /Stage[main]/Apache::Ssl/Package[mod_ssl]/ensure: created</span>
+<span style="color: #888888">Info: /Stage[main]/Apache::Ssl/Package[mod_ssl]: Scheduling refresh of Class[Apache::Service]</span>
+<span style="color: #888888">Notice: /File[/var/cache/mod_ssl/scache]/ensure: created</span>
+<span style="color: #888888">Info: /File[/var/cache/mod_ssl/scache]: Scheduling refresh of Exec[reload-apache]</span>
+<span style="color: #888888">Notice: /Stage[main]/Xinetd/Service[xinetd]/ensure: ensure changed &#39;stopped&#39; to &#39;running&#39;</span>
+<span style="color: #888888">Info: /Stage[main]/Xinetd/Service[xinetd]: Unscheduling refresh on Service[xinetd]</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman_proxy::Proxydhcp/Dhcp::Pool[localdomain]/Concat_fragment[dhcp.conf+70_localdomain.dhcp]/content: content changed &#39;&#39; to &#39;#################################</span>
+<span style="color: #888888"># localdomain</span>
+<span style="color: #888888">#################################</span>
+<span style="color: #888888">subnet 10.2.1.0 netmask 255.255.255.0 {</span>
+
+<span style="color: #888888">  option subnet-mask 255.255.255.0;</span>
+<span style="color: #888888">  option routers 192.168.100.1;</span>
+<span style="color: #888888">}</span>
+
+<span style="color: #888888">&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Dhcp/Concat_build[dhcp.conf]/target: *.dhcp used for ordering</span>
+<span style="color: #888888">Info: /Stage[main]/Dhcp/Concat_build[dhcp.conf]: Scheduling refresh of Service[dhcpd]</span>
+<span style="color: #888888">Notice: /File[/var/lib/puppet/yaml/foreman]/ensure: created</span>
+<span style="color: #888888">Notice: /Stage[main]/Postgresql::Initdb/Exec[postgresql_initdb]/returns: executed successfully</span>
+<span style="color: #888888">Notice: /Stage[main]/Postgresql::Config::Beforeservice/Exec[create_postgresql_conf_path]/returns: executed successfully</span>
+<span style="color: #888888">Notice: /Stage[main]/Postgresql::Config::Beforeservice/File_line[postgresql.conf#include]/ensure: created</span>
+<span style="color: #888888">Info: /Stage[main]/Postgresql::Config::Beforeservice/File_line[postgresql.conf#include]: Scheduling refresh of Service[postgresqld]</span>
+<span style="color: #888888">Notice: /Stage[main]/Postgresql::Config::Beforeservice/File_line[postgresql.conf#listen_addresses]/ensure: created</span>
+<span style="color: #888888">Info: /Stage[main]/Postgresql::Config::Beforeservice/File_line[postgresql.conf#listen_addresses]: Scheduling refresh of Service[postgresqld]</span>
+<span style="color: #888888">Notice: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf]/ensure: created</span>
+<span style="color: #888888">Info: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf]: Scheduling refresh of Exec[concat_/var/lib/pgsql/data/pg_hba.conf]</span>
+<span style="color: #888888">Notice: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf/fragments.concat.out]/ensure: created</span>
+<span style="color: #888888">Notice: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf/fragments]/ensure: created</span>
+<span style="color: #888888">Info: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf/fragments]: Scheduling refresh of Exec[concat_/var/lib/pgsql/data/pg_hba.conf]</span>
+<span style="color: #888888">Notice: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf/fragments.concat]/ensure: created</span>
+<span style="color: #888888">Info: Class[Tftp::Config]: Scheduling refresh of Class[Tftp::Service]</span>
+<span style="color: #888888">Notice: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf/fragments/001_pg_hba_rule_local access as postgres user]/ensure: created</span>
+<span style="color: #888888">Info: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf/fragments/001_pg_hba_rule_local access as postgres user]: Scheduling refresh of Exec[concat_/var/lib/pgsql/data/pg_hba.conf]</span>
+<span style="color: #888888">Notice: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf/fragments/100_pg_hba_rule_allow access to all users]/ensure: created</span>
+<span style="color: #888888">Info: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf/fragments/100_pg_hba_rule_allow access to all users]: Scheduling refresh of Exec[concat_/var/lib/pgsql/data/pg_hba.conf]</span>
+<span style="color: #888888">Notice: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf/fragments/003_pg_hba_rule_deny access to postgresql user]/ensure: created</span>
+<span style="color: #888888">Info: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf/fragments/003_pg_hba_rule_deny access to postgresql user]: Scheduling refresh of Exec[concat_/var/lib/pgsql/data/pg_hba.conf]</span>
+<span style="color: #888888">Notice: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf/fragments/002_pg_hba_rule_local access to database with same name]/ensure: created</span>
+<span style="color: #888888">Info: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf/fragments/002_pg_hba_rule_local access to database with same name]: Scheduling refresh of Exec[concat_/var/lib/pgsql/data/pg_hba.conf]</span>
+<span style="color: #888888">Notice: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf/fragments/101_pg_hba_rule_allow access to ipv6 localhost]/ensure: created</span>
+<span style="color: #888888">Info: /File[/var/lib/puppet/concat/_var_lib_pgsql_data_pg_hba.conf/fragments/101_pg_hba_rule_allow access to ipv6 localhost]: Scheduling refresh of Exec[concat_/var/lib/pgsql/data/pg_hba.conf]</span>
+<span style="color: #888888">Notice: /Stage[main]/Postgresql::Config::Beforeservice/Postgresql::Pg_hba[main]/Concat[/var/lib/pgsql/data/pg_hba.conf]/Exec[concat_/var/lib/pgsql/data/pg_hba.conf]/returns: executed successfully</span>
+<span style="color: #888888">Notice: /Stage[main]/Postgresql::Config::Beforeservice/Postgresql::Pg_hba[main]/Concat[/var/lib/pgsql/data/pg_hba.conf]/Exec[concat_/var/lib/pgsql/data/pg_hba.conf]: Triggered &#39;refresh&#39; from 7 events</span>
+<span style="color: #888888">Info: FileBucket adding {md5}75d10aa75d5abb0893682de8622f3061</span>
+<span style="color: #888888">Info: /File[/var/lib/pgsql/data/pg_hba.conf]: Filebucketed /var/lib/pgsql/data/pg_hba.conf to puppet with sum 75d10aa75d5abb0893682de8622f3061</span>
+<span style="color: #888888">Notice: /File[/var/lib/pgsql/data/pg_hba.conf]/content: content changed &#39;{md5}75d10aa75d5abb0893682de8622f3061&#39; to &#39;{md5}2eea434595bca189ec14b1bd96334138&#39;</span>
+<span style="color: #888888">Notice: /File[/var/lib/pgsql/data/pg_hba.conf]/owner: owner changed &#39;postgres&#39; to &#39;root&#39;</span>
+<span style="color: #888888">Notice: /File[/var/lib/pgsql/data/pg_hba.conf]/mode: mode changed &#39;0600&#39; to &#39;0640&#39;</span>
+<span style="color: #888888">Notice: /File[/var/lib/pgsql/data/pg_hba.conf]/seluser: seluser changed &#39;unconfined_u&#39; to &#39;system_u&#39;</span>
+<span style="color: #888888">Info: Postgresql::Pg_hba[main]: Scheduling refresh of Exec[reload_postgresql]</span>
+<span style="color: #888888">Notice: /Stage[main]/Postgresql::Server/Exec[reload_postgresql]: Triggered &#39;refresh&#39; from 1 events</span>
+<span style="color: #888888">Notice: /Stage[main]/Postgresql::Server/Service[postgresqld]/ensure: ensure changed &#39;stopped&#39; to &#39;running&#39;</span>
+<span style="color: #888888">Info: /Stage[main]/Postgresql::Server/Service[postgresqld]: Unscheduling refresh on Service[postgresqld]</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Database::Postgresql/Postgresql::Db[foreman]/Postgresql::Database[foreman]/Postgresql_psql[Check for existence of db &#39;foreman&#39;]/command: command changed &#39;&#39; to &#39;SELECT 1&#39;</span>
+<span style="color: #888888">Info: /Stage[main]/Foreman::Database::Postgresql/Postgresql::Db[foreman]/Postgresql::Database[foreman]/Postgresql_psql[Check for existence of db &#39;foreman&#39;]: Scheduling refresh of Exec[/usr/bin/createdb --owner=&#39;postgres&#39; --template=template0 --encoding &#39;UTF8&#39;  &#39;foreman&#39;]</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Database::Postgresql/Postgresql::Db[foreman]/Postgresql::Database[foreman]/Exec[/usr/bin/createdb --owner=&#39;postgres&#39; --template=template0 --encoding &#39;UTF8&#39;  &#39;foreman&#39;]: Triggered &#39;refresh&#39; from 1 events</span>
+<span style="color: #888888">Info: /Stage[main]/Foreman::Database::Postgresql/Postgresql::Db[foreman]/Postgresql::Database[foreman]/Exec[/usr/bin/createdb --owner=&#39;postgres&#39; --template=template0 --encoding &#39;UTF8&#39;  &#39;foreman&#39;]: Scheduling refresh of Postgresql_psql[REVOKE CONNECT ON DATABASE &quot;foreman&quot; FROM public]</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Database::Postgresql/Postgresql::Db[foreman]/Postgresql::Database[foreman]/Postgresql_psql[REVOKE CONNECT ON DATABASE &quot;foreman&quot; FROM public]: Triggered &#39;refresh&#39; from 1 events</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Database::Postgresql/Postgresql::Db[foreman]/Postgresql::Database_user[foreman]/Postgresql::Role[foreman]/Postgresql_psql[CREATE ROLE &quot;foreman&quot; ENCRYPTED PASSWORD &#39;md5a50821b44149feadf22330457dec0b80&#39; LOGIN NOCREATEROLE NOCREATEDB NOSUPERUSER  CONNECTION LIMIT -1]/command: command changed &#39;&#39; to &#39;CREATE ROLE &quot;foreman&quot; ENCRYPTED PASSWORD &#39;md5a50821b44149feadf22330457dec0b80&#39; LOGIN NOCREATEROLE NOCREATEDB NOSUPERUSER  CONNECTION LIMIT -1&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Database::Postgresql/Postgresql::Db[foreman]/Postgresql::Database_grant[GRANT foreman - ALL - foreman]/Postgresql_psql[GRANT ALL ON database &quot;foreman&quot; TO &quot;foreman&quot;]/command: command changed &#39;&#39; to &#39;GRANT ALL ON database &quot;foreman&quot; TO &quot;foreman&quot;&#39;</span>
+<span style="color: #888888">Info: Class[Foreman::Database::Postgresql]: Scheduling refresh of Exec[dbmigrate]</span>
+<span style="color: #888888">Info: Class[Foreman::Install]: Scheduling refresh of Class[Foreman::Config]</span>
+<span style="color: #888888">Notice: /File[foreman_vhost]/ensure: defined content as &#39;{md5}d7ee4e366aa41e775199377772fc3ec2&#39;</span>
+<span style="color: #888888">Info: /File[foreman_vhost]: Scheduling refresh of Exec[reload-apache]</span>
+<span style="color: #888888">Info: FileBucket adding {md5}04c5aba3a22138e4099dbf41b7e13181</span>
+<span style="color: #888888">Info: /File[/etc/sysconfig/foreman]: Filebucketed /etc/sysconfig/foreman to puppet with sum 04c5aba3a22138e4099dbf41b7e13181</span>
+<span style="color: #888888">Notice: /File[/etc/sysconfig/foreman]/content: content changed &#39;{md5}04c5aba3a22138e4099dbf41b7e13181&#39; to &#39;{md5}d821f231bd74a3af8139e96a39dcdd40&#39;</span>
+<span style="color: #888888">Info: FileBucket adding {md5}0fac88cedcba367d787ed1c177c692ec</span>
+<span style="color: #888888">Info: /File[/etc/foreman/database.yml]: Filebucketed /etc/foreman/database.yml to puppet with sum 0fac88cedcba367d787ed1c177c692ec</span>
+<span style="color: #888888">Notice: /File[/etc/foreman/database.yml]/content: content changed &#39;{md5}0fac88cedcba367d787ed1c177c692ec&#39; to &#39;{md5}949848f496737fcadf4f208559cfbc92&#39;</span>
+<span style="color: #888888">Notice: /File[/etc/foreman/database.yml]/group: group changed &#39;root&#39; to &#39;foreman&#39;</span>
+<span style="color: #888888">Notice: /File[/etc/foreman/database.yml]/mode: mode changed &#39;0644&#39; to &#39;0640&#39;</span>
+<span style="color: #888888">Info: /File[/etc/foreman/database.yml]: Scheduling refresh of Class[Foreman::Service]</span>
+<span style="color: #888888">Info: /File[/etc/foreman/database.yml]: Scheduling refresh of Class[Foreman::Service]</span>
+<span style="color: #888888">Info: /File[/etc/foreman/database.yml]: Scheduling refresh of Class[Foreman::Service]</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Config/Concat_fragment[foreman_settings+01-header.yaml]/content: content changed &#39;&#39; to &#39;---</span>
+<span style="color: #888888">### File managed with puppet ###</span>
+<span style="color: #888888">## Module:           &#39;foreman&#39;</span>
+<span style="color: #888888">## Template source:  &#39;MODULES/foreman/templates/settings.yaml.erb&#39;</span>
+
+
+<span style="color: #888888">#your default puppet server - can be overridden in the host level</span>
+<span style="color: #888888">#if none specified, plain &quot;puppet&quot; will be used.</span>
+<span style="color: #888888">#:puppet_server: puppet</span>
+<span style="color: #888888">:unattended: true</span>
+<span style="color: #888888">:puppetconfdir: /etc/puppet/puppet.conf</span>
+<span style="color: #888888">:login: true</span>
+<span style="color: #888888">:require_ssl: true</span>
+<span style="color: #888888">:locations_enabled: false</span>
+<span style="color: #888888">:organizations_enabled: false</span>
+<span style="color: #888888">&#39;</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Config/Concat_build[foreman_settings]/target: *.yaml used for ordering</span>
+<span style="color: #888888">Info: FileBucket adding {md5}b26745257cee2a641eb7142d7be547ed</span>
+<span style="color: #888888">Info: /File[/etc/foreman/settings.yaml]: Filebucketed /etc/foreman/settings.yaml to puppet with sum b26745257cee2a641eb7142d7be547ed</span>
+<span style="color: #888888">Notice: /File[/etc/foreman/settings.yaml]/content: content changed &#39;{md5}b26745257cee2a641eb7142d7be547ed&#39; to &#39;{md5}a47813c8aec305542c0e7491c594517e&#39;</span>
+<span style="color: #888888">Notice: /File[/etc/foreman/settings.yaml]/group: group changed &#39;root&#39; to &#39;foreman&#39;</span>
+<span style="color: #888888">Notice: /File[/etc/foreman/settings.yaml]/mode: mode changed &#39;0644&#39; to &#39;0640&#39;</span>
+<span style="color: #888888">Info: /File[/etc/foreman/settings.yaml]: Scheduling refresh of Class[Foreman::Service]</span>
+<span style="color: #888888">Info: /File[/etc/foreman/settings.yaml]: Scheduling refresh of Class[Foreman::Service]</span>
+<span style="color: #888888">Info: /File[/etc/foreman/settings.yaml]: Scheduling refresh of Class[Foreman::Service]</span>
+<span style="color: #888888">Info: Class[Foreman::Config]: Scheduling refresh of Class[Foreman::Database]</span>
+<span style="color: #888888">Info: Class[Foreman::Database]: Scheduling refresh of Exec[dbmigrate]</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Database/Exec[dbmigrate]: Triggered &#39;refresh&#39; from 2 events</span>
+<span style="color: #888888">Info: Class[Foreman::Database]: Scheduling refresh of Class[Foreman::Service]</span>
+<span style="color: #888888">Info: Class[Foreman::Service]: Scheduling refresh of Service[foreman]</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman::Service/Service[foreman]: Triggered &#39;refresh&#39; from 1 events</span>
+<span style="color: #888888">Notice: /Stage[main]/Puppet::Service/Service[puppet]/ensure: ensure changed &#39;stopped&#39; to &#39;running&#39;</span>
+<span style="color: #888888">Info: /Stage[main]/Puppet::Service/Service[puppet]: Unscheduling refresh on Service[puppet]</span>
+<span style="color: #888888">Notice: /Stage[main]/Passenger::Install::Redhat/Package[passenger]/ensure: created</span>
+<span style="color: #888888">Info: Class[Apache::Service]: Scheduling refresh of Service[httpd]</span>
+<span style="color: #888888">Info: Class[Apache::Service]: Scheduling refresh of Exec[reload-apache]</span>
+<span style="color: #888888">Notice: /File[/etc/dhcp]/mode: mode changed &#39;0750&#39; to &#39;0755&#39;</span>
+<span style="color: #888888">Info: FileBucket adding {md5}9fdf34d5c94bfcd2f1607a9e211591e6</span>
+<span style="color: #888888">Info: /File[/etc/dhcp/dhcpd.conf]: Filebucketed /etc/dhcp/dhcpd.conf to puppet with sum 9fdf34d5c94bfcd2f1607a9e211591e6</span>
+<span style="color: #888888">Notice: /File[/etc/dhcp/dhcpd.conf]/content: content changed &#39;{md5}9fdf34d5c94bfcd2f1607a9e211591e6&#39; to &#39;{md5}647b82acae104a4357f324a3b897f6a6&#39;</span>
+<span style="color: #888888">Info: /File[/etc/dhcp/dhcpd.conf]: Scheduling refresh of Service[dhcpd]</span>
+<span style="color: #888888">Notice: /File[/etc/dhcp/dhcpd.hosts]/ensure: defined content as &#39;{md5}8921fbc9b1072088e1fc3e0e72e577f7&#39;</span>
+<span style="color: #888888">Info: /File[/etc/dhcp/dhcpd.hosts]: Scheduling refresh of Service[dhcpd]</span>
+<span style="color: #888888">Notice: /Stage[main]/Dhcp/Service[dhcpd]/ensure: ensure changed &#39;stopped&#39; to &#39;running&#39;</span>
+<span style="color: #888888">Info: /Stage[main]/Dhcp/Service[dhcpd]: Unscheduling refresh on Service[dhcpd]</span>
+<span style="color: #888888">Info: FileBucket adding {md5}58e2f9765e2994db8e8ab19a3513356e</span>
+<span style="color: #888888">Info: /File[/etc/puppet/puppet.conf]: Filebucketed /etc/puppet/puppet.conf to puppet with sum 58e2f9765e2994db8e8ab19a3513356e</span>
+<span style="color: #888888">Notice: /File[/etc/puppet/puppet.conf]/content: content changed &#39;{md5}58e2f9765e2994db8e8ab19a3513356e&#39; to &#39;{md5}7a8dbc71e346e258fbb93c6c94c53f54&#39;</span>
+<span style="color: #888888">Notice: /File[/etc/puppet/rack]/ensure: created</span>
+<span style="color: #888888">Notice: /File[/etc/puppet/rack/tmp]/ensure: created</span>
+<span style="color: #888888">Info: FileBucket adding {md5}1891233908ecf2dd0fff8a73a3a97097</span>
+<span style="color: #888888">Info: /File[/etc/puppet/auth.conf]: Filebucketed /etc/puppet/auth.conf to puppet with sum 1891233908ecf2dd0fff8a73a3a97097</span>
+<span style="color: #888888">Notice: /File[/etc/puppet/auth.conf]/content: content changed &#39;{md5}1891233908ecf2dd0fff8a73a3a97097&#39; to &#39;{md5}7663358b57f6993dd080ba861440a75a&#39;</span>
+<span style="color: #888888">Notice: /File[/etc/puppet/node.rb]/ensure: defined content as &#39;{md5}b12beb59e9ee201b0dabfa5b2d065f43&#39;</span>
+<span style="color: #888888">Notice: /File[/etc/puppet/rack/config.ru]/ensure: defined content as &#39;{md5}bf52c982bf4e679f120f98cc762ae19d&#39;</span>
+<span style="color: #888888">Info: /File[/etc/puppet/rack/config.ru]: Scheduling refresh of Exec[puppet_server_rack-restart]</span>
+<span style="color: #888888">Notice: /Stage[main]/Puppet::Server::Rack/Exec[puppet_server_rack-restart]: Triggered &#39;refresh&#39; from 1 events</span>
+<span style="color: #888888">Notice: /File[/etc/puppet/rack/public]/ensure: created</span>
+<span style="color: #888888">Notice: /File[puppet_vhost]/ensure: defined content as &#39;{md5}abe1528da500d6af8343285cc7412c8e&#39;</span>
+<span style="color: #888888">Info: /File[puppet_vhost]: Scheduling refresh of Exec[reload-apache]</span>
+<span style="color: #888888">Notice: /File[/var/lib/puppet/reports]/ensure: created</span>
+<span style="color: #888888">Notice: /File[/var/lib/puppet/ssl/private_keys]/group: group changed &#39;root&#39; to &#39;puppet&#39;</span>
+<span style="color: #888888">Notice: /File[/etc/puppet/environments]/ensure: created</span>
+<span style="color: #888888">Notice: /File[/etc/puppet/environments/development]/ensure: created</span>
+<span style="color: #888888">Notice: /File[/etc/puppet/environments/development/modules]/ensure: created</span>
+<span style="color: #888888">Notice: /File[/etc/puppet/manifests/site.pp]/ensure: created</span>
+<span style="color: #888888">Notice: /Stage[main]/Puppet::Server::Config/Exec[puppet_server_config-generate_ca_cert]/returns: executed successfully</span>
+<span style="color: #888888">Info: /Stage[main]/Puppet::Server::Config/Exec[puppet_server_config-generate_ca_cert]: Scheduling refresh of Service[httpd]</span>
+<span style="color: #888888">Notice: /Stage[main]/Apache::Service/Service[httpd]/ensure: ensure changed &#39;stopped&#39; to &#39;running&#39;</span>
+<span style="color: #888888">Info: /Stage[main]/Apache::Service/Service[httpd]: Unscheduling refresh on Service[httpd]</span>
+<span style="color: #888888">Notice: /Stage[main]/Apache::Service/Exec[reload-apache]: Triggered &#39;refresh&#39; from 5 events</span>
+<span style="color: #888888">Notice: /File[/etc/puppet/environments/production]/ensure: created</span>
+<span style="color: #888888">Notice: /File[/etc/puppet/environments/production/modules]/ensure: created</span>
+<span style="color: #888888">Notice: /File[/etc/puppet/environments/common]/ensure: created</span>
+<span style="color: #888888">Info: Class[Puppet::Server::Config]: Scheduling refresh of Class[Puppet::Server::Service]</span>
+<span style="color: #888888">Info: Class[Puppet::Server::Service]: Scheduling refresh of Service[puppetmaster]</span>
+<span style="color: #888888">Notice: /Stage[main]/Puppet::Server::Service/Service[puppetmaster]: Triggered &#39;refresh&#39; from 1 events</span>
+<span style="color: #888888">Notice: /User[foreman-proxy]/comment: comment changed &#39;Foreman Proxy deamon user&#39; to &#39;Foreman Proxy account&#39;</span>
+<span style="color: #888888">Notice: /User[foreman-proxy]/groups: groups changed &#39;&#39; to &#39;puppet&#39;</span>
+<span style="color: #888888">Info: /User[foreman-proxy]: Scheduling refresh of Class[Foreman_proxy::Service]</span>
+<span style="color: #888888">Info: /User[foreman-proxy]: Scheduling refresh of Class[Foreman_proxy::Service]</span>
+<span style="color: #888888">Notice: /File[/etc/sudoers.d/foreman-proxy]/ensure: created</span>
+<span style="color: #888888">Notice: /File[/var/lib/tftpboot//boot]/ensure: created</span>
+<span style="color: #888888">Notice: /File[/var/lib/tftpboot//pxelinux.cfg]/ensure: created</span>
+<span style="color: #888888">Notice: /File[/etc/puppet/autosign.conf]/ensure: created</span>
+<span style="color: #888888">Info: FileBucket adding {md5}47d133b872f21493a4140213573e630e</span>
+<span style="color: #888888">Info: /File[/etc/foreman-proxy/settings.yml]: Filebucketed /etc/foreman-proxy/settings.yml to puppet with sum 47d133b872f21493a4140213573e630e</span>
+<span style="color: #888888">Notice: /File[/etc/foreman-proxy/settings.yml]/content: content changed &#39;{md5}47d133b872f21493a4140213573e630e&#39; to &#39;{md5}75c71418c45af2ab1be92936059a2b47&#39;</span>
+<span style="color: #888888">Notice: /File[/etc/foreman-proxy/settings.yml]/owner: owner changed &#39;root&#39; to &#39;foreman-proxy&#39;</span>
+<span style="color: #888888">Notice: /File[/etc/foreman-proxy/settings.yml]/group: group changed &#39;root&#39; to &#39;foreman-proxy&#39;</span>
+<span style="color: #888888">Info: /File[/etc/foreman-proxy/settings.yml]: Scheduling refresh of Class[Foreman_proxy::Service]</span>
+<span style="color: #888888">Info: /File[/etc/foreman-proxy/settings.yml]: Scheduling refresh of Class[Foreman_proxy::Service]</span>
+<span style="color: #888888">Info: /File[/etc/foreman-proxy/settings.yml]: Scheduling refresh of Class[Foreman_proxy::Service]</span>
+<span style="color: #888888">Info: Class[Foreman_proxy::Config]: Scheduling refresh of Class[Foreman_proxy::Service]</span>
+<span style="color: #888888">Info: Class[Foreman_proxy::Service]: Scheduling refresh of Service[foreman-proxy]</span>
+<span style="color: #888888">Notice: /Stage[main]/Foreman_proxy::Service/Service[foreman-proxy]/ensure: ensure changed &#39;stopped&#39; to &#39;running&#39;</span>
+<span style="color: #888888">Info: /Stage[main]/Foreman_proxy::Service/Service[foreman-proxy]: Unscheduling refresh on Service[foreman-proxy]</span>
+<span style="color: #888888">Info: Creating state file /var/lib/puppet/state/state.yaml</span>
+<span style="color: #888888">Notice: Finished catalog run in 184.93 seconds</span>
+
+<span style="color: #888888"> Okay, you&#39;re all set! Check</span>
+<span style="color: #888888">/usr/share/foreman-installer/foreman_installer/answers.yaml for your</span>
+<span style="color: #888888">config.</span>
+
+<span style="color: #888888"> You can apply it in the future as root with:</span>
+<span style="color: #888888">  echo include foreman_installer | puppet apply --modulepath</span>
+<span style="color: #888888">/usr/share/foreman-installer -v</span>
+</pre></div>
         </details>
       </article>
     </section>
@@ -257,6 +633,65 @@ $def with(config)
 <span style="color: #888888">/sbin/iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 8443 -j ACCEPT</span>
 </pre></div>
 
+<p>In addition, the Foreman VM will be acting as an internet gateway and providing NAT service to the clients it configures on vmnet2. To do this, we need to turn on IP forwarding and add some more IPTables rules.</p>
+
+<p>To turn on IP forwarding, we need to edit /etc/sysctl.conf and set net.ipv4.ip_forward = 1. My /etc/sysctl.conf file looks like:</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888"># Kernel sysctl configuration file for Red Hat Linux</span>
+<span style="color: #888888">#</span>
+<span style="color: #888888"># For binary values, 0 is disabled, 1 is enabled.  See sysctl(8) and</span>
+<span style="color: #888888"># sysctl.conf(5) for more details.</span>
+
+<span style="color: #888888"># Controls IP packet forwarding</span>
+<span style="color: #888888">net.ipv4.ip_forward = 1</span>
+
+<span style="color: #888888"># Controls source route verification</span>
+<span style="color: #888888">net.ipv4.conf.default.rp_filter = 1</span>
+
+<span style="color: #888888"># Do not accept source routing</span>
+<span style="color: #888888">net.ipv4.conf.default.accept_source_route = 0</span>
+
+<span style="color: #888888"># Controls the System Request debugging functionality of the kernel</span>
+<span style="color: #888888">kernel.sysrq = 0</span>
+
+<span style="color: #888888"># Controls whether core dumps will append the PID to the core filename.</span>
+<span style="color: #888888"># Useful for debugging multi-threaded applications.</span>
+<span style="color: #888888">kernel.core_uses_pid = 1</span>
+
+<span style="color: #888888"># Controls the use of TCP syncookies</span>
+<span style="color: #888888">net.ipv4.tcp_syncookies = 1</span>
+
+<span style="color: #888888"># Disable netfilter on bridges.</span>
+<span style="color: #888888">net.bridge.bridge-nf-call-ip6tables = 0</span>
+<span style="color: #888888">net.bridge.bridge-nf-call-iptables = 0</span>
+<span style="color: #888888">net.bridge.bridge-nf-call-arptables = 0</span>
+
+<span style="color: #888888"># Controls the default maxmimum size of a mesage queue</span>
+<span style="color: #888888">kernel.msgmnb = 65536</span>
+
+<span style="color: #888888"># Controls the maximum size of a message, in bytes</span>
+<span style="color: #888888">kernel.msgmax = 65536</span>
+
+<span style="color: #888888"># Controls the maximum shared segment size, in bytes</span>
+<span style="color: #888888">kernel.shmmax = 68719476736</span>
+
+<span style="color: #888888"># Controls the maximum number of shared memory segments, in pages</span>
+<span style="color: #888888">kernel.shmall = 4294967296</span>
+</pre></div>
+
+
+That set the system configuration to enable ipv4 forwarding, but we need to activate that configuration:
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">sysctl net.ipv4.ip_forward</span>
+</pre></div>
+
+<p>Then, to enable NAT, we add the following IPTables rules.</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888"># /sbin/iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE</span>
+<span style="color: #888888"># /sbin/iptables -A FORWARD -i eth1 -o eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT</span>
+<span style="color: #888888"># /sbin/iptables -A FORWARD -i eth0 -o eth1 -j ACCEPT</span>
+</pre></div>
+
 <p>Pointing a browser at https://192.168.134.132 (the IP address of my VM -- yours will likely be different) I unfortunately found that I could not connect. Taking a look at the IPTables rules, we see why:</p>
 
 <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> iptables --line-numbers -L -n -v
@@ -280,18 +715,68 @@ $def with(config)
 <span style="color: #888888">Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)</span>
 <span style="color: #888888">num   pkts bytes target     prot opt in     out     source               destination         </span>
 <span style="color: #888888">1        0     0 REJECT     all  --  *      *       0.0.0.0/0            0.0.0.0/0           reject-with icmp-host-prohibited </span>
+<span style="color: #888888">2     161K  237M ACCEPT     all  --  eth1   eth0    0.0.0.0/0            0.0.0.0/0           state RELATED,ESTABLISHED</span>
+<span style="color: #888888">3    87983 3641K ACCEPT     all  --  eth0   eth1    0.0.0.0/0            0.0.0.0/0</span> 
 
 <span style="color: #888888">Chain OUTPUT (policy ACCEPT 51 packets, 6724 bytes)</span>
 <span style="color: #888888">num   pkts bytes target     prot opt in     out     source               destination </span>
 </pre></div>
 
-<p>The problem is the catch-all reject at the INPUT chain's rule #5. We need to delete that rule, add it to the end of the input chain, and save the IPTables configuration to persist between reboots:</p>
+<p>The problem is the catch-all reject at the INPUT chain's rule #5. Plus, the first rule in the FORWARD chain will prevent forwarding and thus NAT from working. Thus, we need to delete those rules, add them to the end of the chains and save the IPTables configuration to persist between reboots:</p>
 
 <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #555555">[root@foreman ~]#</span> iptables -D INPUT 5
+<span style="color: #555555">[root@foreman ~]#</span> iptables -D FORWARD 1 
 <span style="color: #555555">[root@foreman ~]#</span> /sbin/iptables -A INPUT -j REJECT --reject-with icmp-host-prohibited
+<span style="color: #555555">[root@foreman ~]#</span> /sbin/iptables -A FORWARD -j REJECT --reject-with icmp-host-prohibited
 <span style="color: #555555">[root@foreman ~]#</span> service iptables save
 <span style="color: #888888">iptables: Saving firewall rules to /etc/sysconfig/iptables:[  OK  ]</span>
 </pre></div>
+
+<p>For reference, my primary table now looks like:</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888"># /sbin/iptables --line-numbers -L -n -v</span>
+<span style="color: #888888">Chain INPUT (policy ACCEPT 0 packets, 0 bytes)</span>
+<span style="color: #888888">num   pkts bytes target     prot opt in     out     source               destination         </span>
+<span style="color: #888888">1      475  122K ACCEPT     all  --  *      *       0.0.0.0/0            0.0.0.0/0           state RELATED,ESTABLISHED </span>
+<span style="color: #888888">2        0     0 ACCEPT     icmp --  *      *       0.0.0.0/0            0.0.0.0/0           </span>
+<span style="color: #888888">3        8   480 ACCEPT     all  --  lo     *       0.0.0.0/0            0.0.0.0/0           </span>
+<span style="color: #888888">4        1    64 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:22 </span>
+<span style="color: #888888">5        0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:80 </span>
+<span style="color: #888888">6        0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:443 </span>
+<span style="color: #888888">7        0     0 ACCEPT     tcp  --  eth0   *       0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:69 </span>
+<span style="color: #888888">8        0     0 ACCEPT     udp  --  eth0   *       0.0.0.0/0            0.0.0.0/0           state NEW udp dpt:69 </span>
+<span style="color: #888888">9        0     0 ACCEPT     udp  --  eth0   *       0.0.0.0/0            0.0.0.0/0           state NEW udp dpt:67 </span>
+<span style="color: #888888">10       0     0 ACCEPT     udp  --  eth0   *       0.0.0.0/0            0.0.0.0/0           state NEW udp dpt:68 </span>
+<span style="color: #888888">11       0     0 ACCEPT     udp  --  eth0   *       0.0.0.0/0            0.0.0.0/0           state NEW udp dpt:53 </span>
+<span style="color: #888888">12       0     0 ACCEPT     tcp  --  eth0   *       0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:53 </span>
+<span style="color: #888888">13       0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0           state NEW tcp dpt:8443 </span>
+<span style="color: #888888">14       0     0 REJECT     all  --  *      *       0.0.0.0/0            0.0.0.0/0           reject-with icmp-host-prohibited </span>
+
+<span style="color: #888888">Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)</span>
+<span style="color: #888888">num   pkts bytes target     prot opt in     out     source               destination         </span>
+<span style="color: #888888">1        0     0 ACCEPT     all  --  eth1   eth0    0.0.0.0/0            0.0.0.0/0           state RELATED,ESTABLISHED </span>
+<span style="color: #888888">2        0     0 ACCEPT     all  --  eth0   eth1    0.0.0.0/0            0.0.0.0/0           </span>
+<span style="color: #888888">3        0     0 REJECT     all  --  *      *       0.0.0.0/0            0.0.0.0/0           reject-with icmp-host-prohibited </span>
+
+<span style="color: #888888">Chain OUTPUT (policy ACCEPT 5 packets, 756 bytes)</span>
+<span style="color: #888888">num   pkts bytes target     prot opt in     out     source               destination </span>
+</pre></div>
+
+
+<p>And my NAT table looks like</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888"># /sbin/iptables -t nat --line-numbers -L -n -v</span>
+<span style="color: #888888">Chain PREROUTING (policy ACCEPT 765 packets, 52068 bytes)</span>
+<span style="color: #888888">num   pkts bytes target     prot opt in     out     source               destination         </span>
+
+<span style="color: #888888">Chain POSTROUTING (policy ACCEPT 27 packets, 1560 bytes)</span>
+<span style="color: #888888">num   pkts bytes target     prot opt in     out     source               destination         </span>
+<span style="color: #888888">1      466 29429 MASQUERADE  all  --  *      eth1    0.0.0.0/0            0.0.0.0/0           </span>
+
+<span style="color: #888888">Chain OUTPUT (policy ACCEPT 182 packets, 12273 bytes)</span>
+<span style="color: #888888">num   pkts bytes target     prot opt in     out     source               destination         </span>
+</pre></div>
+
 
 <br />
 <p><a href="$config['fsrelpath']/images/Foreman_Login.png" data-lightbox="foreman-login" title="Foreman Login Page"  ><img alt="" src="$config['fsrelpath']/images/Foreman_Login.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>With the firewall finally configured, we can now reach the web UI. Since my VM is running at 192.168.134.134, I point my browser at https://192.168.134.134 and use the username of 'admin' and the password of 'changeme' to view the site.  After logging in, you are directed to the dashboard shown below. Note, that you'll need to accept an untrusted connection to visit the site -- this is due to the site's self-signed certificate.</p>
@@ -388,6 +873,52 @@ The second report is warning free.
 <a href="$config['fsrelpath']/images/4_Statistics.png" title="Statistics Page" data-lightbox="PopulatedPages" ></a>
 </div>
 </div>
+
+<p>At this point, it's time to take a look at DHCPD configuration. The Foreman Proxy is supposed to manage this for us, but a common error seems to be that Foreman specifies a router IP not on the same subnet as the IP address assigned to clients.</p>
+
+<p>When this happens, any client you try to PXE boot will fail complaining that there is not a DHCP server on the network. Additionally, you'll likely see repeated DHCPDECLINE error messages in /var/log/boot.log (which doesn't entirely make sense to me, as that's supposedly a log of messages during the foreman host's boot, not the client).</p>
+
+<p>This off-subnet routers statement error was a problem on my system. Looking at the /etc/dhcpd/dhcpd.conf file shown below, you'll notice the commented-out routers line towards the end of the file setting the router to 192.168.100.1. I am not sure why Foreman chose that IP address, as nothing running on my laptop or within VMWare is running on the 192.168.100.0 network. I commented out that line and inserted a replacement pointing to the Foreman vmnet2 IP address as the router.</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888"># cat /etc/dhcp/dhcpd.conf </span>
+<span style="color: #888888"># dhcpd.conf</span>
+<span style="color: #888888">omapi-port 7911;</span>
+
+<span style="color: #888888">default-lease-time 600;</span>
+<span style="color: #888888">max-lease-time 7200;</span>
+
+
+<span style="color: #888888">ddns-update-style none;</span>
+
+<span style="color: #888888">option domain-name &quot;localdomain&quot;;</span>
+<span style="color: #888888">option domain-name-servers 10.2.1.1;</span>
+
+<span style="color: #888888">allow booting;</span>
+<span style="color: #888888">allow bootp;</span>
+
+<span style="color: #888888">option fqdn.no-client-update    on;  # set the &quot;O&quot; and &quot;S&quot; flag bits</span>
+<span style="color: #888888">option fqdn.rcode2            255;</span>
+<span style="color: #888888">option pxegrub code 150 = text ;</span>
+
+<span style="color: #888888"># PXE Handoff.</span>
+<span style="color: #888888">next-server 10.2.1.1;</span>
+<span style="color: #888888">filename &quot;pxelinux.0&quot;;</span>
+
+<span style="color: #888888">log-facility local7;</span>
+
+<span style="color: #888888">include &quot;/etc/dhcp/dhcpd.hosts&quot;;</span>
+<span style="color: #888888">#################################</span>
+<span style="color: #888888"># localdomain</span>
+<span style="color: #888888">#################################</span>
+<span style="color: #888888">subnet 10.2.1.0 netmask 255.255.255.0 {</span>
+
+<span style="color: #888888">  option subnet-mask 255.255.255.0;</span>
+<span style="color: #888888">  #option routers 192.168.100.1;</span>
+<span style="color: #888888">  option routers 10.2.1.1;</span>
+<span style="color: #888888">}</span>
+</pre></div>
+
+
 <p>That wraps up the installation of Foreman, and we've verified that it is at least capable of communicating with puppet clients. Of course, we haven't done anything useful with it yet. </p>
 
 <p>My next article, Unattended Installations With Foreman will go into some simple use cases for Foreman.</p>
