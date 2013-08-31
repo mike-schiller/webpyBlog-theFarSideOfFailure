@@ -1,0 +1,28 @@
+####### minimum configuration required for all renderers #############
+postTitle:                  "VMWare VM Boot Delay"
+postTitleColor:             "#f8f8f8"
+postTitleBackgroundColor:   "#f3f3f3"
+postImage:                  ./post.png
+postRenderer:               homeRenderer
+postWebPath:                /tips/vm_boot_delay
+postDate:                   "20130815"
+navTitle:                   
+contentBlocks:
+    narrowContent:
+        template:           ./post.html
+        templateRenderer:   minimalRendererWithDate
+    narrowContentShareFollow:
+        template:           static/shareFollow.html
+        templateRenderer:
+    wideContent:
+        template:           #./post.html
+        templateRenderer:   #minimalRenderer
+    wideContentShareFollow:
+        template:           #static/shareFollow.html
+        templateRenderer:
+    leftFooterContent:
+        template:
+        templateRenderer:
+    commentBlock:
+        template:           static/disqus.html
+        templateRenderer:

@@ -1,0 +1,30 @@
+$def with(config)
+<intro>
+<p>I do most of my development in virtual machines -- primarily running in <a target="_blank" href="http://www.vmware.com/products/fusion/">VMWare Fusion</a> as my man dev boxes are <a target="_blank" href="http://www.apple.com/macbook-pro/">MacBook Pros</a>. Occasionally I need to edit the <a target="_blank" href="http://en.wikipedia.org/wiki/BIOS">BIOS</a> settings for VMWare VMs, but this is problematic as the amount of time you have to press &lt;F2&gt; to enter setup or &lt;F12&gt; for a boot menu seems to be well under a second. There is, however, an easy way to modify the boot delay.</p>
+</intro>
+
+<p>Increasing the boot delay involves adding a single line to the virtual machine's primary configuration file, it's <a target="_blank" href="http://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1714">.vmx</a> file. On Mac, VMWare VMs appear in Finder to be monolithic files. In reality, they are a directory structure. So, if you're going to use the UI to find and edit the file, youll need to right-click on the VM in Finder and choose <a target="_blank" href="http://forums.macrumors.com/showthread.php?t=1226839">"Show Package Contents"</a>. You'll then see the VM directory's contents and be able to use Finder to open the .vmx file in an editor.</p>
+
+<p>Of course, if you're at the command line, just cd into the VM's directory structure and edit the .vmx file with <a target="_blank" href="http://www.vim.org/">your favorite editor</a>.</p>
+
+<p>Oh, and one note, you should probably not edit the .vmx file with the VM running (or maybe even if paused).</p>
+
+<p>Once you have the .vmx file open in your editor, you can add (or modify) the boot delay line. The value is in milliseconds, so I'm setting it to a 3 second delay in the example below</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">bios.bootDelay = &quot;3000&quot;</span>
+</pre></div>
+
+<p><a href="$config['fsrelpath']/images/vmware_splash.png" data-lightbox="image-1" title="VMWare Boot Splash Screen"  ><img alt="" src="$config['fsrelpath']/images/vmware_splash.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>Immediately after the VMWare splash screen flashes by (right), you'll now see the screen below for the amount of time you specified, giving you a chance to actually press &lt;F2&gt; or &lt;F12&gt;. Given the short default boot delay, you may never have seen this screen before.</p>
+
+<br/><br/><br/><br/>
+<p><a href="$config['fsrelpath']/images/vmware_bios.png" data-lightbox="image-2" title="VMWare BIOS Boot Delay Screen"  ><img alt="" src="$config['fsrelpath']/images/vmware_bios.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:100%" /></a></p>
+
+<p><a href="$config['fsrelpath']/images/OSX_keyboard.png" data-lightbox="image-3" title="OS X Keyboard Mapping Settings"  ><img alt="" src="$config['fsrelpath']/images/OSX_keyboard.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>One other thing to note is that on OS X the &lt;F2&gt; key is mapped to increase screen brightness. So, to enter setup, you'll actually need to press fn+&lt;F2&gt;. The &lt;F12&gt; key is doubly mapped. On it's own, the key is mapped to increase volume. In combination with the function key, it is mapped to show the <a href="http://support.apple.com/kb/HT2492">dashboard</a>. I don't use the dashboard, so I can use OS X's keyboard settings to unmap the dashboard from the fn+&lt;F12&gt; combination (right).
+
+<br/><br/><br/>
+<p><a href="$config['fsrelpath']/images/VMWare_keys.png" data-lightbox="image-4" title="VMWare Keyboard Mapping Settings"  ><img alt="" src="$config['fsrelpath']/images/VMWare_keys.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:40%" /></a>Should you not want to unmap the fn+&lt;F12&gt; key, another alternative is to add a mapping within VMWare Fusion's key mapping utility. To get to the VMWare key mapping utility, open Fusion and go to VMWare Fusion-&gt;Preferences in the top menu. Then add a key mapping for &lt;F12&gt;. In my case, I mapped Command-B to &lt;F12&gt;. I chose B for network <span style="font-weight:bold;">b</span>oot.</p>
+
+
+$:config['commentBlock']
+
+
