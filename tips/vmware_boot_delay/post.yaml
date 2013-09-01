@@ -5,7 +5,7 @@ postTitleBackgroundColor:   "#f3f3f3"
 postImage:                  ./post.jpg
 postRenderer:               homeRenderer
 postWebPath:                /tips/vm_boot_delay
-postDate:                   "20130815"
+postDate:                   "20130831"
 navTitle:                   
 contentBlocks:
     narrowContent:
