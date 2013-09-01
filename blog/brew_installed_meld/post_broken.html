@@ -1,0 +1,214 @@
+$def with(config)
+<intro>
+<p>I'm typically <a target="_blank" href="http://www.vim.org/">Vim</a> developer. Lately, due to the fact that I'm doing more Java / JVM Language development, and thanks to the awesomeness of <a target="_blank" href="http://www.jetbrains.com/idea/">IntelliJ IDEA</a>, I've been working more in IDEs. I've even come to trust IDEA's Git integration. That said, I still do a lot at the command line, and really like launching a version-control-aware visual diff tool from the command line. <a target="_blank" href="http://meldmerge.org/">Meld</a> is my go-to in Linux, and since it's available for OS X via <a target="_blank" href="http://brew.sh/">Homebrew</a> (Brew), I figured I'd set it up on my Mac.</p>
+
+<p>Since I'm blogging about what should be a trivial thing, you may have guessed that I encountered problems. Indeed, I did, and here's how I got around said problems.</p>
+</intro>
+
+<p>As I was working with a fairly fresh install of OS X when setting this up, my first step to install Meld via Brew was to install <a target="_blank" href="http://en.wikipedia.org/wiki/X_Window_System">X</a>. The Meld UI requires X Windows, and the X that ships with OS X these days is just a stub pointing you to install the <a target="_blank" href="http://xquartz.macosforge.org/landing/">Quartz</a> implementation of X Windows. So, if you don't already have XQuartz installed, grab the .dmg from the link and install it.</p>
+
+<p>Next, I installed Brew.</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">$ ruby -e &quot;$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)&quot;</span>
+</pre></div>
+
+<p>Then, I used Brew to install meld:</p>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">$$ ruby -e &quot;$$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)&quot;</span>
+<span style="color: #888888">$$ brew install meld</span>
+<span style="color: #888888">...</span>
+<span style="color: #888888">$$ meld</span>
+<span style="color: #888888">Couldn&#39;t bind the translation domain. Some translations won&#39;t work.</span>
+<span style="color: #888888">&#39;module&#39; object has no attribute &#39;bindtextdomain&#39;</span>
+<span style="color: #888888">Cannot import: pygtk</span>
+<span style="color: #888888">No module named pygtk</span>
+</pre></div>
+
+<p>No problem. Right?</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">$$ brew install pygtk</span>
+<span style="color: #888888">Warning: pygtk-2.24.0 already installed</span>
+</pre></div>
+
+<p>Wait. What?</p>
+
+<p>Is it already installed?:</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">$$ find /usr/local -name pygtk*</span>
+<span style="color: #888888">/usr/local/bin/pygtk-codegen-2.0</span>
+<span style="color: #888888">/usr/local/bin/pygtk-demo</span>
+<span style="color: #888888">/usr/local/Cellar/pygobject/2.28.6/include/pygtk-2.0</span>
+<span style="color: #888888">/usr/local/Cellar/pygobject/2.28.6/lib/python2.7/site-packages/pygtk.pth</span>
+<span style="color: #888888">/usr/local/Cellar/pygobject/2.28.6/lib/python2.7/site-packages/pygtk.py</span>
+<span style="color: #888888">/usr/local/Cellar/pygobject/2.28.6/lib/python2.7/site-packages/pygtk.pyc</span>
+<span style="color: #888888">/usr/local/Cellar/pygobject/2.28.6/lib/python2.7/site-packages/pygtk.pyo</span>
+<span style="color: #888888">/usr/local/Cellar/pygtk</span>
+<span style="color: #888888">/usr/local/Cellar/pygtk/2.24.0/bin/pygtk-codegen-2.0</span>
+<span style="color: #888888">/usr/local/Cellar/pygtk/2.24.0/bin/pygtk-demo</span>
+<span style="color: #888888">/usr/local/Cellar/pygtk/2.24.0/include/pygtk-2.0</span>
+<span style="color: #888888">/usr/local/Cellar/pygtk/2.24.0/include/pygtk-2.0/pygtk</span>
+<span style="color: #888888">/usr/local/Cellar/pygtk/2.24.0/include/pygtk-2.0/pygtk/pygtk.h</span>
+<span style="color: #888888">/usr/local/Cellar/pygtk/2.24.0/lib/pkgconfig/pygtk-2.0.pc</span>
+<span style="color: #888888">/usr/local/Cellar/pygtk/2.24.0/lib/pygtk</span>
+<span style="color: #888888">/usr/local/Cellar/pygtk/2.24.0/lib/pygtk/2.0/pygtk-demo.py</span>
+<span style="color: #888888">/usr/local/Cellar/pygtk/2.24.0/lib/pygtk/2.0/pygtk-demo.pyc</span>
+<span style="color: #888888">/usr/local/Cellar/pygtk/2.24.0/lib/pygtk/2.0/pygtk-demo.pyo</span>
+<span style="color: #888888">/usr/local/Cellar/pygtk/2.24.0/share/gtk-doc/html/pygtk</span>
+<span style="color: #888888">/usr/local/Cellar/pygtk/2.24.0/share/gtk-doc/html/pygtk/pygtk-introduction.html</span>
+<span style="color: #888888">/usr/local/Cellar/pygtk/2.24.0/share/gtk-doc/html/pygtk/pygtk.devhelp</span>
+<span style="color: #888888">/usr/local/Cellar/pygtk/2.24.0/share/pygtk</span>
+<span style="color: #888888">/usr/local/include/pygtk-2.0</span>
+<span style="color: #888888">/usr/local/include/pygtk-2.0/pygtk</span>
+<span style="color: #888888">/usr/local/lib/pkgconfig/pygtk-2.0.pc</span>
+<span style="color: #888888">/usr/local/lib/pygtk</span>
+<span style="color: #888888">/usr/local/lib/python2.7/site-packages/pygtk.pth</span>
+<span style="color: #888888">/usr/local/lib/python2.7/site-packages/pygtk.py</span>
+<span style="color: #888888">/usr/local/lib/python2.7/site-packages/pygtk.pyc</span>
+<span style="color: #888888">/usr/local/lib/python2.7/site-packages/pygtk.pyo</span>
+<span style="color: #888888">/usr/local/Library/Formula/pygtk.rb</span>
+<span style="color: #888888">/usr/local/Library/Formula/pygtkglext.rb</span>
+<span style="color: #888888">/usr/local/Library/Formula/pygtksourceview.rb</span>
+<span style="color: #888888">/usr/local/Library/LinkedKegs/pygtk</span>
+<span style="color: #888888">/usr/local/opt/pygtk</span>
+<span style="color: #888888">/usr/local/share/gtk-doc/html/pygtk</span>
+<span style="color: #888888">/usr/local/share/pygtk</span>
+</pre></div>
+
+
+<p>So, meld is a Python application. What version of Python are we running?<p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">$$ which python</span>
+<span style="color: #888888">/usr/bin/python</span>
+</pre></div>
+
+
+<p>That's not the Brew version of python. Brew installs everythng in /usr/local. So, is there a brew version?</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">$$ find /usr/local -name python</span>
+<span style="color: #888888">/usr/local/opt/python</span>
+<span style="color: #888888">$$ ls -l /usr/local/opt/python</span>
+<span style="color: #888888">lrwxr-xr-x  1 mike  admin  22 Aug 27 23:15 /usr/local/opt/python -&gt; ../Cellar/python/2.7.5</span>
+<span style="color: #888888">$$ ls -l /usr/local/Cellar/python/2.7.5</span>
+<span style="color: #888888">ls: /usr/local/Cellar/python/2.7.5: No such file or directory</span>
+</pre></div>
+
+<p>Ah, a broken link... So we just need to brew install python, right?</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">$$ brew install python</span>
+</pre></div>
+
+<p>Now we should be able to run meld:</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">$$ meld</span>
+<span style="color: #888888">Couldn&#39;t bind the translation domain. Some translations won&#39;t work.</span>
+<span style="color: #888888">&#39;module&#39; object has no attribute &#39;bindtextdomain&#39;</span>
+<span style="color: #888888">Fatal Python error: PyThreadState_Get: no current thread</span>
+<span style="color: #888888">Abort trap: 6</span>
+</pre></div>
+
+<p><a href="$config['fsrelpath']/images/python_error.png" data-lightbox="image-1" title="Python Crashes When Launching Meld"  ><img alt="" src="$config['fsrelpath']/images/python_error.png" style="float:right; margin-top:-10px; margin-right:-5px; font-size:13px; line-height:1.6em; opacity:0.9; width:80%" /></a></p>
+
+<p>wtf???</p>
+
+<p>So, what's wrong? Well, I *think* the issue is that pygtk was build against the standard OS X python. When we attempted to run meld before installing the brew version of Python, it launched the system python from /usr/bin, but the PYTHONPATH wasn't set to import the necessary modules from somewhere in /usr/local.</p>
+
+<p>When we launched meld after installing the brew Python, the brew Python found the pygtk module, but a crash occurred because we're trying ot dynamically link against the system shared libraries (dylibs on OS X, I think) rather than Brew-built shared objects.</p>
+
+<p>So, we could probably remove the brew python, set the PYTHONPATH for the system python and get this working. However, I intend to use the brew Python for development and make it my default. Consequently, a better solution for me is to get meld working with the brew version of python.</p>
+
+<p>As it turns out, the only thing I did wrong was to Brew install Meld before installing Python. As most people likely install Python first, I don't think many people encounter this issue -- which is likely why the first few Google results require thorough reading to figure out what's going on.</p>
+
+<p>Now, I'm sure there's a cleaner way to do this, but I'm going to take the brute force approach and remove all of brew. It's slightly time consuming to reinstall everything, but very easy.</p>
+
+<p>To uninstall Brew, follow the guidance from the Homebrew Github <a target="_blank" href="https://github.com/mxcl/homebrew/wiki/FAQ">FAQ</a> and run their <a target="_blank" href="https://gist.github.com/mxcl/1173223">uninstall script</a>.</p>
+
+<section>
+  <article>
+    <details>
+      <summary>Uninstall Script</summary>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">#!/bin/sh</span>
+<span style="color: #888888"># Just copy and paste the lines below (all at once, it won&#39;t work line by line!)</span>
+<span style="color: #888888"># MAKE SURE YOU ARE HAPPY WITH WHAT IT DOES FIRST! THERE IS NO WARRANTY!</span>
+<span style="color: #888888"> </span>
+<span style="color: #888888">function abort {</span>
+<span style="color: #888888">  echo &quot;$$1&quot;</span>
+<span style="color: #888888">  exit 1</span>
+<span style="color: #888888">}</span>
+<span style="color: #888888"> </span>
+<span style="color: #888888">set -e</span>
+<span style="color: #888888"> </span>
+<span style="color: #888888">/usr/bin/which -s git || abort &quot;brew install git first!&quot;</span>
+<span style="color: #888888">test -d /usr/local/.git || abort &quot;brew update first!&quot;</span>
+<span style="color: #888888"> </span>
+<span style="color: #888888">cd `brew --prefix`</span>
+<span style="color: #888888">git checkout master</span>
+<span style="color: #888888">git ls-files -z | pbcopy</span>
+<span style="color: #888888">rm -rf Cellar</span>
+<span style="color: #888888">bin/brew prune</span>
+<span style="color: #888888">pbpaste | xargs -0 rm</span>
+<span style="color: #888888">rm -r Library/Homebrew Library/Aliases Library/Formula Library/Contributions </span>
+<span style="color: #888888">test -d Library/LinkedKegs &amp;&amp; rm -r Library/LinkedKegs</span>
+<span style="color: #888888">rmdir -p bin Library share/man/man1 2&gt; /dev/null</span>
+<span style="color: #888888">rm -rf .git</span>
+<span style="color: #888888">rm -rf ~/Library/Caches/Homebrew</span>
+<span style="color: #888888">rm -rf ~/Library/Logs/Homebrew</span>
+<span style="color: #888888">rm -rf /Library/Caches/Homebrew</span>
+</pre></div>
+    </details>
+  </article>
+</section>
+
+<p>Then run one final cleanup command</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">rm -rf /usr/local/Cellar /usr/local/.git &amp;&amp; brew cleanup</span>
+</pre></div>
+
+<p>Now, reinstall Brew.</p>
+
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">ruby -e &quot;$$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)&quot;</span>
+</pre></div>
+
+<p>Then, use Brew to install first Python, then Meld. Then, run Meld.</p>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">$$ brew install python</span>
+<span style="color: #888888">$$ which python</span>
+<span style="color: #888888">/usr/local/bin/python</span>
+<span style="color: #888888">$$ brew install meld</span>
+
+<span style="color: #888888">$$ meld</span>
+<span style="color: #888888">Couldn&#39;t bind the translation domain. Some translations won&#39;t work.</span>
+<span style="color: #888888">&#39;module&#39; object has no attribute &#39;bindtextdomain&#39;</span>
+<span style="color: #888888">/usr/local/lib/python2.7/site-packages/gobject/__init__.py:115: Warning: attempting to add an interface (GtkEditable) to class (HistoryFileEntry) after class_init</span>
+<span style="color: #888888">  type_register(cls, namespace.get(&#39;__gtype_name__&#39;))</span>
+<span style="color: #888888">/usr/local/bin/meld:167: GtkWarning: Could not find the icon &#39;meld-vc-icon&#39;. The &#39;hicolor&#39; theme</span>
+<span style="color: #888888">was not found either, perhaps you need to install it.</span>
+<span style="color: #888888">You can get a copy from:</span>
+<span style="color: #888888">	http://icon-theme.freedesktop.org/releases</span>
+<span style="color: #888888">  gtk.main()</span>
+</pre></div>
+
+<p>There is a warning, but...</p>
+*** 2nd screenshot ***
+
+
+<p>Woo Hoo! It works now.</p>
+
+<p>And, I can view the changes I've made to a file since the last Git commit simply by running meld on that file.</p>
+
+*** 3rd screenshot ***
+
+
+<h3>Update</h3>
+<p>I had meld + python installed on another computer in the same messed up state. I was able to fix it by:</p>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;font-size:10px;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%"><span style="color: #888888">$$ brew uninstall meld</span>
+<span style="color: #888888">$$ brew uninstall pygtk</span>
+<span style="color: #888888">$$ brew uninstall cairo</span>
+<span style="color: #888888">$$ brew install meld</span>
+</pre></div>
+
+
+
+
+
+
+$:config['commentBlock']
+
+

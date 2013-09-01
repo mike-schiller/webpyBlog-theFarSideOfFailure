@@ -1,0 +1,28 @@
+####### minimum configuration required for all renderers #############
+postTitle:                  "Installing Meld with Brew"
+postTitleColor:             "#f8f8f8"
+postTitleBackgroundColor:   "#f3f3f3"
+postImage:                  ./post.jpg
+postRenderer:               homeRenderer
+postWebPath:                /blog/brew_installed_meld
+postDate:                   "20130831"
+navTitle:                   
+contentBlocks:
+    narrowContent:
+        template:           ./post.html
+        templateRenderer:   minimalRendererWithDate
+    narrowContentShareFollow:
+        template:           static/shareFollow.html
+        templateRenderer:
+    wideContent:
+        template:           #./post.html
+        templateRenderer:   #minimalRenderer
+    wideContentShareFollow:
+        template:           #static/shareFollow.html
+        templateRenderer:
+    leftFooterContent:
+        template:
+        templateRenderer:
+    commentBlock:
+        template:           static/disqus.html
+        templateRenderer:
