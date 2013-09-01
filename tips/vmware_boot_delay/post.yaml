@@ -1,8 +1,8 @@
 ####### minimum configuration required for all renderers #############
 postTitle:                  "VMWare VM Boot Delay"
-postTitleColor:             "#f8f8f8"
+postTitleColor:             "black"
 postTitleBackgroundColor:   "#f3f3f3"
-postImage:                  ./post.png
+postImage:                  ./post.jpg
 postRenderer:               homeRenderer
 postWebPath:                /tips/vm_boot_delay
 postDate:                   "20130815"
